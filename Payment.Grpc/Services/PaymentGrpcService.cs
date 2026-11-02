@@ -1,31 +1,43 @@
 ﻿using Grpc.Core;
+using Payment.Grpc.Business;
 using SistemaReservas.Contracts.Payment.V1;
 
 namespace Payment.Grpc.Services
 {
     // Capa de Presentación (N-Layer): punto de entrada gRPC de Payment.
     // Hereda de la clase base que genera Grpc.Tools a partir de Contract/gRPC/payment.proto.
-    // Solo traduce entre el formato del contrato y Business; no toma decisiones de negocio.
-
-    //NOTA PARA OWEN : si esto esta en Service, vamos a usar la Folder de Business? tal vez a la altura del program agregaria el controller.
+    // Solo valida y traduce entre el formato del contrato y Business; no toma decisiones de negocio.
     public class PaymentGrpcService : PaymentService.PaymentServiceBase
     {
-        public override Task<PaymentResponseDto> ProcesarPago(PaymentRequestDto request, ServerCallContext context)
+        private readonly PaymentBusiness _business;
+
+        public PaymentGrpcService(PaymentBusiness business)
         {
-            // TEMPORAL: respuesta fija que respeta simular_rechazo, para que Booking pueda probar
-            // los caminos de pago aprobado y rechazado. Se reemplaza por la llamada a PaymentBusiness.
-            var approved = !request.SimularRechazo;
+            _business = business;
+        }
 
-            var response = new PaymentResponseDto
+        public override async Task<PaymentResponseDto> ProcesarPago(PaymentRequestDto request, ServerCallContext context)
+        {
+            // Validación de entrada: si el pedido no cumple el contrato, se responde INVALID_ARGUMENT
+            // sin llegar a Business (así lo documenta payment.proto).
+            if (!Guid.TryParse(request.SolicitudId, out var solicitudId))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "solicitud_id no es un UUID válido."));
+
+            if (!Guid.TryParse(request.ReservaId, out var reservaId))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "reserva_id no es un UUID válido."));
+
+            if (request.MontoCentavos <= 0)
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "monto_centavos debe ser mayor a cero."));
+
+            var result = await _business.ProcesarPagoAsync(solicitudId, reservaId, request.MontoCentavos, request.SimularRechazo);
+
+            // Traducción del resultado de Business al formato del contrato.
+            return new PaymentResponseDto
             {
-                Exitoso = approved,
-                Mensaje = approved
-                    ? $"Pago de prueba aprobado para la reserva {request.ReservaId}"
-                    : $"Pago de prueba rechazado para la reserva {request.ReservaId} (simular_rechazo = true)",
-                CodigoTransferencia = approved ? "PRUEBA" : string.Empty
+                Exitoso = result.Exitoso,
+                Mensaje = result.Mensaje,
+                CodigoTransferencia = result.CodigoTransferencia
             };
-
-            return Task.FromResult(response);
         }
     }
 }
