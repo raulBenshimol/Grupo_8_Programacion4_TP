@@ -1,7 +1,10 @@
-﻿using Availability.Controllers.Controllers;
+﻿
+using System.Security.Claims;
+using Availability.Application.Interfaces;
+using Availability.Controllers.Controllers;
 using Availability.Controllers.DTOs;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AvailabilitySite.Controllers;
 
@@ -10,14 +13,16 @@ namespace AvailabilitySite.Controllers;
 public class ReservasApiController : ControllerBase
 {
     private readonly AvailabilityController _availabilityLogicController;
+    private readonly IUsuarioRepository _usuarioRepository;
     private readonly ILogger<ReservasApiController> _logger;
 
-    // Inyectamos el controlador lógico del Anillo 3 y el logger.
     public ReservasApiController(
         AvailabilityController availabilityLogicController,
+        IUsuarioRepository usuarioRepository,
         ILogger<ReservasApiController> logger)
     {
         _availabilityLogicController = availabilityLogicController;
+        _usuarioRepository = usuarioRepository;
         _logger = logger;
     }
 
@@ -32,7 +37,6 @@ public class ReservasApiController : ControllerBase
             "[AUDITORIA] INICIO API - Consulta de asientos. EventoId: {EventoId}",
             eventoId);
 
-        // Validamos que el identificador sea positivo.
         if (eventoId <= 0)
         {
             _logger.LogWarning(
@@ -71,19 +75,52 @@ public class ReservasApiController : ControllerBase
     }
 
     // POST: api/ReservasApi/solicitar
-    [Authorize] // Requiere que el usuario esté autenticado.
+    [Authorize]
     [HttpPost("solicitar")]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SolicitarReserva(
         [FromBody] SolicitudRequestDto request)
     {
+        // Obtener la identidad autenticada.
+        var identificador = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        int usuarioId;
+
+        if (int.TryParse(identificador, out int id) && id > 0)
+        {
+            // La sesión MVC contiene el ID numérico.
+            usuarioId = id;
+        }
+        else
+        {
+            // Algunos tokens identifican al usuario por su correo.
+            var email = User.FindFirstValue(ClaimTypes.Email)
+                        ?? User.FindFirstValue("email");
+
+            if (string.IsNullOrWhiteSpace(email))
+                return Forbid();
+
+            var usuario = await _usuarioRepository
+                .ObtenerPorIdentidadAsync(
+                    email.Trim().ToLowerInvariant());
+
+            if (usuario == null)
+                return Forbid();
+
+            usuarioId = usuario.Id;
+        }
+
+        // Nunca confiar en el UsuarioId enviado por el cliente.
+        request.UsuarioId = usuarioId;
+
         _logger.LogInformation(
             "[AUDITORIA] INICIO API - Solicitud de reserva. EventoId: {EventoId}, AsientoId: {AsientoId}",
             request.EventoId, request.AsientoId);
 
-        // Validamos los identificadores recibidos.
         if (request.EventoId <= 0 ||
             request.AsientoId <= 0 ||
             request.UsuarioId <= 0)
@@ -93,12 +130,25 @@ public class ReservasApiController : ControllerBase
 
             return BadRequest(new
             {
-                Mensaje = "Los identificadores del evento, asiento y usuario deben ser mayores que cero."
+                Mensaje = "Los identificadores del evento y asiento deben ser mayores que cero."
             });
         }
 
         try
         {
+            // Comprobar que el asiento corresponda al evento
+            // y aparezca entre los disponibles.
+            var asientos = await _availabilityLogicController
+                .ConsultarAsientos(request.EventoId);
+
+            if (!asientos.Any(a => a.Id == request.AsientoId))
+            {
+                return BadRequest(new
+                {
+                    Mensaje = "El asiento no está disponible para este evento."
+                });
+            }
+
             var response = await _availabilityLogicController
                 .SolicitarReserva(request);
 
@@ -106,7 +156,7 @@ public class ReservasApiController : ControllerBase
                 "[AUDITORIA] FIN API - Solicitud de reserva. SolicitudId: {SolicitudId}",
                 response.SolicitudId);
 
-            // La solicitud fue recibida; Booking debe procesarla.
+            // Booking todavía debe procesar la reserva.
             return Accepted(value: response);
         }
         catch (Exception ex)
@@ -123,5 +173,3 @@ public class ReservasApiController : ControllerBase
         }
     }
 }
- 
-

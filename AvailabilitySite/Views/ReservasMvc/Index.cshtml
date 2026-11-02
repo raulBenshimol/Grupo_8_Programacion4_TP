@@ -1,17 +1,240 @@
 ﻿@model AvailabilitySite.Models.ReservasViewModel
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Disponibilidad de asientos";
+
+    var autenticado = User.Identity?.IsAuthenticated == true;
+
+    // Datos del usuario autenticado.
+    var correoUsuario = autenticado
+        ? User.Identity?.Name
+        : null;
+
+    // Mensajes provenientes del controlador MVC.
+    var mensaje = TempData["Mensaje"] as string;
+    var error = TempData["Error"] as string;
+    var resultadoSeguimiento = TempData["ResultadoSeguimiento"] as string;
+    var solicitudConsultada = TempData["SolicitudConsultada"] as string;
+    var solicitudNueva = TempData["NuevaSolicitudId"] as string;
+
+    // Datos de presentación del seguimiento.
+    var estado = "Sin información";
+    var mensajeEstado = "No se pudo obtener el estado de la reserva.";
+    var colorEstado = "secondary";
+    var reservaId = "";
+    var motivoRechazo = "";
+
+    // Interpretar la respuesta de Booking.
+    if (!string.IsNullOrWhiteSpace(resultadoSeguimiento))
+    {
+        try
+        {
+            using var documento = JsonDocument.Parse(resultadoSeguimiento);
+            var raiz = documento.RootElement;
+
+            if (raiz.TryGetProperty("Booking", out var booking) &&
+                booking.ValueKind == JsonValueKind.Object)
+            {
+                if (booking.TryGetProperty("id", out var propiedadId) &&
+                    propiedadId.ValueKind == JsonValueKind.String)
+                {
+                    reservaId = propiedadId.GetString() ?? "";
+                }
+
+                if (booking.TryGetProperty("status", out var propiedadEstado) &&
+                    propiedadEstado.ValueKind == JsonValueKind.String)
+                {
+                    estado = propiedadEstado.GetString() ?? "Sin información";
+                }
+
+                if (booking.TryGetProperty("rejectionMotive", out var propiedadMotivo) &&
+                    propiedadMotivo.ValueKind == JsonValueKind.String)
+                {
+                    motivoRechazo = propiedadMotivo.GetString() ?? "";
+                }
+
+                switch (estado.ToLowerInvariant())
+                {
+                    case "confirmada":
+                        colorEstado = "success";
+                        mensajeEstado = "Tu reserva fue confirmada correctamente.";
+                        break;
+
+                    case "retenida":
+                    case "pendiente":
+                    case "pendientepago":
+                        colorEstado = "warning";
+                        mensajeEstado = "Tu reserva todavía está en proceso.";
+                        break;
+
+                    case "rechazada":
+                        colorEstado = "danger";
+                        mensajeEstado = "La reserva no pudo ser confirmada.";
+                        break;
+
+                    default:
+                        colorEstado = "secondary";
+                        mensajeEstado = "El estado de la reserva no está disponible.";
+                        break;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // Si el JSON es inválido, mostrar un estado neutral.
+        }
+    }
 }
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
 
     <h2>Disponibilidad de asientos</h2>
+
     <p class="text-muted">
-        Seleccione un evento para consultar sus asientos disponibles.
+        Seleccioná un evento para consultar sus asientos disponibles.
     </p>
 
-    <!-- Selección de eventos de prueba -->
+    @* Mensajes generales *@
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger" role="alert">
+            @error
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensaje))
+    {
+        <div class="alert alert-success" role="status">
+            @mensaje
+        </div>
+    }
+
+    @* Consulta inmediata después de solicitar una reserva *@
+    @if (autenticado && !string.IsNullOrWhiteSpace(solicitudNueva))
+    {
+        <div class="card border-primary mb-4">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    Solicitud de reserva enviada
+                </h5>
+
+                <p class="mb-2">
+                    Tu solicitud fue recibida.
+                    Booking debe confirmar el resultado.
+                </p>
+
+                <p class="mb-3">
+                    <strong>Identificador:</strong>
+                    <code style="overflow-wrap:anywhere;">@solicitudNueva</code>
+                </p>
+
+                <form asp-controller="ReservasMvc"
+                      asp-action="ConsultarEstado"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="eventoId"
+                           value="@Model.EventoId" />
+
+                    <input type="hidden"
+                           name="solicitudId"
+                           value="@solicitudNueva" />
+
+                    <button type="submit" class="btn btn-primary">
+                        Consultar estado de mi reserva
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+
+    @* Tarjeta de seguimiento de la reserva *@
+    @if (!string.IsNullOrWhiteSpace(resultadoSeguimiento))
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+
+                    <div>
+                        <h5 class="card-title mb-1">
+                            Estado de tu reserva
+                        </h5>
+
+                        <p class="text-muted small mb-0">
+                            Información consultada en Booking.
+                        </p>
+                    </div>
+
+                    <span class="badge bg-@colorEstado">
+                        @estado
+                    </span>
+                </div>
+
+                <div class="alert alert-@colorEstado mb-3"
+                     role="status">
+                    @mensajeEstado
+                </div>
+
+                @* Mostrar el usuario autenticado *@
+                @if (autenticado && !string.IsNullOrWhiteSpace(correoUsuario))
+                {
+                    <div class="mb-3">
+                        <p class="small text-muted mb-1">
+                            Usuario autenticado
+                        </p>
+
+                        <p class="fw-semibold mb-0">
+                            @correoUsuario
+                        </p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(motivoRechazo))
+                {
+                    <p class="mb-3">
+                        <strong>Motivo del rechazo:</strong>
+                        @motivoRechazo
+                    </p>
+                }
+
+                <hr />
+
+                @if (!string.IsNullOrWhiteSpace(solicitudConsultada))
+                {
+                    <p class="small text-muted mb-1">
+                        Identificador de solicitud
+                    </p>
+
+                    <div class="bg-light border rounded p-2 mb-3">
+                        <code style="overflow-wrap:anywhere;">
+                            @solicitudConsultada
+                        </code>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(reservaId))
+                {
+                    <p class="small text-muted mb-1">
+                        Identificador de reserva en Booking
+                    </p>
+
+                    <div class="bg-light border rounded p-2">
+                        <code style="overflow-wrap:anywhere;">
+                            @reservaId
+                        </code>
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
+
+    @* Selección de evento *@
     <form asp-controller="ReservasMvc"
           asp-action="Index"
           method="get"
@@ -23,7 +246,8 @@
 
         <select id="eventoId"
                 name="eventoId"
-                class="form-select mb-3">
+                class="form-select mb-3"
+                onchange="this.form.submit()">
 
             <option value="1" selected="@(Model.EventoId == 1)">
                 Evento de prueba 1
@@ -38,13 +262,10 @@
             </option>
         </select>
 
-        <button type="submit" class="btn btn-primary">
-            Consultar asientos
-        </button>
     </form>
 
-    <!-- Listado de asientos disponibles -->
-    <h4>Asientos disponibles — Evento @Model.EventoId</h4>
+    @* Listado de asientos disponibles *@
+    <h4>Asientos — Evento @Model.EventoId</h4>
 
     @if (Model.Asientos.Count == 0)
     {
@@ -54,73 +275,132 @@
     }
     else
     {
-        <div class="row g-3 mt-2">
+        @* Cuatro columnas en escritorio, dos en tablet y una en móvil *@
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-2">
+
             @foreach (var asiento in Model.Asientos)
             {
-                <div class="col-md-3 col-sm-6">
-                    <div class="card">
+                <div class="col">
+                    <div class="card h-100">
                         <div class="card-body text-center">
 
-                            <h5>Asiento @asiento.Codigo</h5>
+                            <h5 class="card-title">
+                                Asiento @asiento.Codigo
+                            </h5>
 
-                            <p>Estado: @asiento.Estado</p>
+                            <p class="mb-2">
+                                Estado: @asiento.Estado
+                            </p>
 
                             <span class="badge bg-success">
                                 Disponible
                             </span>
 
-                            <!-- Reserva pendiente de integrar con autenticación -->
                             <div class="mt-3">
-                                <button type="button"
-                                        class="btn btn-primary btn-sm"
-                                        disabled
-                                        title="Requiere iniciar sesión">
-                                    Solicitar reserva
-                                </button>
-                            </div>
 
+                                @if (autenticado)
+                                {
+                                    <form asp-controller="ReservasMvc"
+                                          asp-action="SolicitarReserva"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="eventoId"
+                                               value="@Model.EventoId" />
+
+                                        <input type="hidden"
+                                               name="asientoId"
+                                               value="@asiento.Id" />
+
+                                        <button type="submit"
+                                                class="btn btn-primary btn-sm"
+                                                onclick="return confirm('¿Querés solicitar la reserva del asiento @asiento.Codigo?')">
+                                            Solicitar reserva
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            onclick="alert('Debés iniciar sesión para solicitar una reserva.')">
+                                        Solicitar reserva
+                                    </button>
+                                }
+
+                            </div>
                         </div>
                     </div>
                 </div>
             }
+
         </div>
     }
 
-    <!-- Sección de seguimiento de solicitudes -->
+    @* Consulta de reservas anteriores *@
     <div class="mt-5">
-
         <hr />
 
-        <h4>Consultar estado de una solicitud</h4>
+        <details>
+            <summary class="h5" style="cursor:pointer;">
+                Consultar una reserva anterior
+            </summary>
 
-        <p class="text-muted">
-            Ingrese el identificador de su solicitud para consultar su estado.
-        </p>
+            <div class="mt-3">
 
-        <div class="mb-3">
-            <label for="solicitudId" class="form-label">
-                Identificador de solicitud
-            </label>
+                <p class="text-muted">
+                    Ingresá el identificador de una solicitud anterior
+                    para consultar su estado.
+                </p>
 
-            <input type="text"
-                   id="solicitudId"
-                   class="form-control"
-                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                   disabled />
-        </div>
+                @if (autenticado)
+                {
+                    <form asp-controller="ReservasMvc"
+                          asp-action="ConsultarEstado"
+                          method="post">
 
-        <!-- Seguimiento pendiente de integrar con autenticación -->
-        <button type="button"
-                class="btn btn-secondary"
-                disabled
-                title="Requiere iniciar sesión">
-            Consultar estado
-        </button>
+                        @Html.AntiForgeryToken()
 
-        <p class="text-muted mt-2">
-            El seguimiento estará disponible cuando se integre la autenticación.
-        </p>
+                        <input type="hidden"
+                               name="eventoId"
+                               value="@Model.EventoId" />
 
+                        <div class="mb-3">
+
+                            <label for="solicitudId"
+                                   class="form-label">
+                                Identificador de solicitud
+                            </label>
+
+                            <input type="text"
+                                   id="solicitudId"
+                                   name="solicitudId"
+                                   class="form-control"
+                                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                   value="@solicitudConsultada"
+                                   required />
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-secondary">
+                            Consultar estado
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-secondary"
+                            onclick="alert('Debés iniciar sesión para consultar tus reservas.')">
+                        Consultar estado
+                    </button>
+                }
+
+            </div>
+        </details>
     </div>
 
 </div>

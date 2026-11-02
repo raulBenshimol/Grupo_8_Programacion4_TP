@@ -72,6 +72,30 @@ namespace Availability.Infrastructure.Migrations
 
                     b.ToTable("Solicitudes", (string)null);
                 });
+
+            modelBuilder.Entity("Availability.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("IdentidadExterna")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdentidadExterna")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }
