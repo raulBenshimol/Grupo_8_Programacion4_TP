@@ -1,14 +1,27 @@
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Payment.Grpc.Services;
+using Payment.Grpc.Business;
+using Payment.Grpc.Business.Gateway;
 using Payment.Grpc.Data;
+using Payment.Grpc.Services;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+
+
+// Capa de Datos: base propia de Payment en SQLite.Se elige SQLite por practicidad para el TP
+// (un solo archivo, sin instalar un motor); en un sistema real se usaría SQL Server o PostgreSQL.
+builder.Services.AddDbContext<PaymentDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("PaymentDb")));
+
+// Inyección de dependencias (N-Layer): cada capa pide interfaces y acá se decide qué implementación recibe.
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPaymentGateway, SimulatedPaymentGateway>();
+builder.Services.AddScoped<PaymentBusiness>();
 
 // Validación del JWT emitido por el AuthServer: se verifica la firma con su clave PÚBLICA (RS256).
 var rsa = RSA.Create();
@@ -27,6 +40,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PaymentDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
