@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.64.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.22">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.22" />
+	  <!-- PENDIENTE (punto e, autenticación): agregar Microsoft.AspNetCore.Authentication.JwtBearer 9.x
+     para validar localmente el JWT emitido por Keycloak. -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.22" />
 	  <!-- PENDIENTE (capa Data): agregar Microsoft.EntityFrameworkCore.Sqlite 9.0.22 (misma versión que Availability y Booking).
      SQLite se elige por practicidad para el TP: la base es un solo archivo y no requiere instalar un motor.
