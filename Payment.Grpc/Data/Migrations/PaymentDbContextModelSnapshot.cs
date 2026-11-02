@@ -7,7 +7,7 @@ using Payment.Grpc.Data;
 
 #nullable disable
 
-namespace Payment.Grpc.Migrations
+namespace Payment.Grpc.Data.Migrations
 {
     [DbContext(typeof(PaymentDbContext))]
     partial class PaymentDbContextModelSnapshot : ModelSnapshot
@@ -26,26 +26,30 @@ namespace Payment.Grpc.Migrations
                     b.Property<bool>("Aprobado")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CodigoTransferencia")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("FechaTransaccion")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int>("Monto")
-                        .HasPrecision(18, 2)
+                    b.Property<long>("MontoCentavos")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ReservaId")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("ReservaId")
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("SolicitudId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SolicitudId")
+                    b.HasIndex("ReservaId")
                         .IsUnique()
-                        .HasDatabaseName("UX_Pagos_SolicitudId");
+                        .HasDatabaseName("UX_Pagos_ReservaId");
 
                     b.ToTable("Pagos", (string)null);
                 });
