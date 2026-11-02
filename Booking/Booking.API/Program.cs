@@ -63,6 +63,12 @@ builder.Services.AddScoped<IPaymentClient, GrpcPaymentClient>();
 
 var app = builder.Build();
 
+// Crea la base si no existe y aplica las migraciones pendientes antes de empezar a consumir mensajes.
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<BookingDbContext>().Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
