@@ -1,5 +1,4 @@
-﻿
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Availability.Application.UseCases;
 using Availability.Controllers.Controllers;
@@ -15,21 +14,24 @@ public class ReservasMvcController : Controller
     private readonly AvailabilityController _availabilityController;
     private readonly SeguimientoController _seguimientoController;
     private readonly ObtenerResultadoSolicitudUseCase _obtenerResultado;
+    private readonly ConsultarDisponibilidadUseCase _consultarDisponibilidad;
     private readonly ILogger<ReservasMvcController> _logger;
 
     public ReservasMvcController(
         AvailabilityController availabilityController,
         SeguimientoController seguimientoController,
         ObtenerResultadoSolicitudUseCase obtenerResultado,
+        ConsultarDisponibilidadUseCase consultarDisponibilidad,
         ILogger<ReservasMvcController> logger)
     {
         _availabilityController = availabilityController;
         _seguimientoController = seguimientoController;
         _obtenerResultado = obtenerResultado;
+        _consultarDisponibilidad = consultarDisponibilidad;
         _logger = logger;
     }
 
-    // GET: Mostrar los asientos del evento seleccionado.
+    // GET: Mostrar todos los asientos del evento seleccionado.
     [HttpGet]
     public async Task<IActionResult> Index(int eventoId = 1)
     {
@@ -41,14 +43,22 @@ public class ReservasMvcController : Controller
             EventoId = eventoId
         };
 
-        // Reutilizar el controlador lógico del Anillo 3.
-        modelo.Asientos = await _availabilityController
-            .ConsultarAsientos(eventoId);
+        // Obtener todos los asientos del evento.
+        var asientos = await _consultarDisponibilidad
+            .EjecutarTodos(eventoId);
+
+        // Convertir las entidades del dominio a DTO para la vista MVC.
+        modelo.Asientos = asientos.Select(a => new AsientoDto
+        {
+            Id = a.Id,
+            Codigo = a.Codigo,
+            Estado = a.Estado.ToString()
+        }).ToList();
 
         if (modelo.Asientos.Count == 0)
         {
             modelo.Mensaje =
-                "No hay asientos disponibles para este evento.";
+                "No se encontraron asientos para este evento.";
         }
 
         return View(modelo);
@@ -84,8 +94,7 @@ public class ReservasMvcController : Controller
 
         try
         {
-            // Comprobar que el asiento esté disponible
-            // para el evento seleccionado.
+            // Mantener la validación original: solo asientos libres.
             var asientos = await _availabilityController
                 .ConsultarAsientos(eventoId);
 
@@ -115,18 +124,12 @@ public class ReservasMvcController : Controller
                 "[AUDITORIA] Solicitud recibida. SolicitudId: {SolicitudId}",
                 resultado.SolicitudId);
 
-
             TempData["Mensaje"] =
                 $"Solicitud recibida. Identificador: {resultado.SolicitudId}. " +
                 "La reserva todavía no está confirmada.";
 
             // Conservar el identificador para consultar el estado.
             TempData["NuevaSolicitudId"] = resultado.SolicitudId.ToString();
-
-            return RedirectToAction(
-                nameof(Index),
-                new { eventoId });
-
 
             return RedirectToAction(
                 nameof(Index),
@@ -185,7 +188,7 @@ public class ReservasMvcController : Controller
                 "[AUDITORIA] INICIO MVC - Consulta de estado. SolicitudId: {SolicitudId}",
                 id);
 
-            // Verificar que la solicitud pertenezca al usuario.
+            // Verificar que la solicitud pertenezca al usuario autenticado.
             var solicitud = await _obtenerResultado.Ejecutar(id);
 
             if (solicitud == null ||
@@ -203,12 +206,11 @@ public class ReservasMvcController : Controller
                     new { eventoId });
             }
 
-            // Consultar el estado mediante el Anillo 3.
-            // SeguimientoController consulta Availability y Booking.
+            // Consultar Booking por REST y sincronizar la confirmación.
             var resultado = await _seguimientoController
                 .ObtenerEstado(id);
 
-            // Guardar el resultado para mostrarlo en Index.
+            // Guardar el resultado para mostrarlo en la tarjeta.
             TempData["ResultadoSeguimiento"] =
                 JsonSerializer.Serialize(resultado);
 

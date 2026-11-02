@@ -30,9 +30,13 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // 2. Casos de Uso (Anillo 2)
+// 2. Casos de Uso (Anillo 2)
 builder.Services.AddScoped<SolicitarReservaInteractor>();
 builder.Services.AddScoped<ConsultarDisponibilidadUseCase>();
 builder.Services.AddScoped<ObtenerResultadoSolicitudUseCase>();
+
+// Sincroniza el estado de las reservas con Booking.
+builder.Services.AddScoped<SincronizarEstadoReservaUseCase>();
 
 
 // 3. Presenter (Anillo 3) - CAMBIO: Registramos una sola instancia para evitar el GUID en cero

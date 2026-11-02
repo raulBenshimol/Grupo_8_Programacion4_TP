@@ -14,5 +14,10 @@ namespace Availability.Application.Interfaces
 
         Task Actualizar(SolicitudReserva solicitud);
 
+        // Actualiza la solicitud y el asiento en una misma operación.
+        Task ActualizarConAsiento(
+            SolicitudReserva solicitud,
+            Asiento asiento);
+
     }
 }

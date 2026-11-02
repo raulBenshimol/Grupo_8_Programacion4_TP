@@ -264,7 +264,7 @@
 
     </form>
 
-    @* Listado de asientos disponibles *@
+    @* Listado de asientos y sus estados *@
     <h4>Asientos — Evento @Model.EventoId</h4>
 
     @if (Model.Asientos.Count == 0)
@@ -275,11 +275,17 @@
     }
     else
     {
-        @* Cuatro columnas en escritorio, dos en tablet y una en móvil *@
+        @* Cuatro columnas en escritorio, dos en tablet y una en móvil. *@
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-2">
 
             @foreach (var asiento in Model.Asientos)
             {
+                // El estado puede provenir como enum o texto desde el DTO.
+                var estaLibre = string.Equals(
+                asiento.Estado.ToString(),
+                "libre",
+                StringComparison.OrdinalIgnoreCase);
+
                 <div class="col">
                     <div class="card h-100">
                         <div class="card-body text-center">
@@ -292,13 +298,25 @@
                                 Estado: @asiento.Estado
                             </p>
 
-                            <span class="badge bg-success">
-                                Disponible
-                            </span>
+                            @if (estaLibre)
+                            {
+                                <span class="badge bg-success">Disponible</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">No disponible</span>
+                            }
 
                             <div class="mt-3">
-
-                                @if (autenticado)
+                                @if (!estaLibre)
+                                {
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            disabled>
+                                        No disponible
+                                    </button>
+                                }
+                                else if (autenticado)
                                 {
                                     <form asp-controller="ReservasMvc"
                                           asp-action="SolicitarReserva"
@@ -329,13 +347,11 @@
                                         Solicitar reserva
                                     </button>
                                 }
-
                             </div>
                         </div>
                     </div>
                 </div>
             }
-
         </div>
     }
 
