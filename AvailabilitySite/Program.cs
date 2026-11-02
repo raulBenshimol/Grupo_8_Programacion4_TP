@@ -8,6 +8,7 @@ using Availability.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using AvailabilitySite.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using AvailabilitySite.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,13 +31,15 @@ builder.Host.UseSerilog((context, configuration) =>
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // 2. Casos de Uso (Anillo 2)
-// 2. Casos de Uso (Anillo 2)
 builder.Services.AddScoped<SolicitarReservaInteractor>();
 builder.Services.AddScoped<ConsultarDisponibilidadUseCase>();
 builder.Services.AddScoped<ObtenerResultadoSolicitudUseCase>();
 
 // Sincroniza el estado de las reservas con Booking.
 builder.Services.AddScoped<SincronizarEstadoReservaUseCase>();
+
+// Servicio que consulta automáticamente los estados en Booking.
+builder.Services.AddHostedService<SincronizacionReservasWorker>();
 
 
 // 3. Presenter (Anillo 3) - CAMBIO: Registramos una sola instancia para evitar el GUID en cero

@@ -38,3 +38,7 @@ Ademas mejorar la intefzaz mostrando mensajes, quiero hacerlo paso a paso sin mo
 Vamos a aprovechar el get rest que ya tenemos implementado para consultar el estado de la solicitud y actualizar la informacion de la Db.
 Tambien implementar una modificacion en la interfaz para mostrar el estado recomienda accion.
 Hay que respetar la arquitectura y no modificar innecesariamente lo que ya tenemos desarrollado, vamos a hacerlo paso a paso.
+
+10-Continuando con el TP ahora vamos a implementar la actualizacion automatica de los estados de los asientos sin necesidad de refrescar la pagina.
+Lo vamos a realizar con Partial Views y Ajax, aprovechando lo que ya tenemos desarrollado.
+Como siempre vamos a respetar la arquitectura y no modificar innecesariamente lo que ya tenemos desarrollado.

@@ -36,6 +36,9 @@ namespace Availability.Infrastructure.Migrations
                     b.Property<int>("EventoId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("SolicitudReservaId")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("Asientos", (string)null);

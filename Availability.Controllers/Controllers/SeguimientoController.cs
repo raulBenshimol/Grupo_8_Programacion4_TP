@@ -28,7 +28,7 @@ public class SeguimientoController
 
     public async Task<object> ObtenerEstado(Guid solicitudId)
     {
-        // 1. Buscar la solicitud en nuestra base SQLite.
+        // 1. Buscar la solicitud original en Availability.
         var solicitud = await _obtenerResultado.Ejecutar(solicitudId);
 
         if (solicitud == null)
@@ -62,8 +62,7 @@ public class SeguimientoController
             };
         }
 
-        // 3. Leer el estado de Booking.
-        // BookingHttpClient devuelve JsonElement para respuestas JSON.
+        // 3. Interpretar el estado y el motivo de rechazo de Booking.
         if (bookingResponse is JsonElement booking &&
             booking.ValueKind == JsonValueKind.Object &&
             booking.TryGetProperty("status", out var propiedadEstado) &&
@@ -71,28 +70,37 @@ public class SeguimientoController
         {
             var estadoBooking = propiedadEstado.GetString();
 
-            if (string.Equals(
-                estadoBooking,
-                "Confirmada",
-                StringComparison.OrdinalIgnoreCase))
+            // El motivo puede ser null cuando no existe rechazo.
+            string? motivoBooking = null;
+
+            if (booking.TryGetProperty(
+                    "rejectionMotive",
+                    out var propiedadMotivo) &&
+                propiedadMotivo.ValueKind == JsonValueKind.String)
             {
-                // 4. Actualizar la solicitud y el asiento en SQLite.
-                // Si falla, no ocultamos el problema.
+                motivoBooking = propiedadMotivo.GetString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(estadoBooking))
+            {
+                // Availability refleja lo informado por Booking.
                 await _sincronizarEstado.Ejecutar(
                     solicitudId,
-                    estadoBooking!);
+                    estadoBooking,
+                    motivoBooking);
 
                 _logger.LogInformation(
-                    "[AUDITORIA] Sincronización consultada. SolicitudId: {SolicitudId}",
+                    "[AUDITORIA] Estado recibido de Booking: {Estado}. SolicitudId: {SolicitudId}",
+                    estadoBooking,
                     solicitudId);
             }
         }
 
-        // 5. Recuperar el estado local después de la sincronización.
+        // 4. Obtener el estado local después de la sincronización.
         var solicitudActualizada = await _obtenerResultado
             .Ejecutar(solicitudId);
 
-        // 6. Mantener la respuesta que utiliza nuestra vista Razor.
+        // 5. Conservar la respuesta utilizada por la vista Razor.
         return new
         {
             SolicitudId = solicitudId,

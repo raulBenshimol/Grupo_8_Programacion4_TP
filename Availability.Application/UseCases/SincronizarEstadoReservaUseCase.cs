@@ -1,5 +1,4 @@
-﻿
-using Availability.Application.Interfaces;
+﻿using Availability.Application.Interfaces;
 using Availability.Domain.Enum;
 using Microsoft.Extensions.Logging;
 
@@ -8,20 +7,20 @@ namespace Availability.Application.UseCases;
 public class SincronizarEstadoReservaUseCase
 {
     private readonly ISolicitudRepository _solicitudes;
-    private readonly IAsientoRepository _asientos;
     private readonly ILogger<SincronizarEstadoReservaUseCase> _logger;
 
     public SincronizarEstadoReservaUseCase(
         ISolicitudRepository solicitudes,
-        IAsientoRepository asientos,
         ILogger<SincronizarEstadoReservaUseCase> logger)
     {
         _solicitudes = solicitudes;
-        _asientos = asientos;
         _logger = logger;
     }
 
-    public async Task Ejecutar(Guid solicitudId, string estadoBooking)
+    public async Task Ejecutar(
+        Guid solicitudId,
+        string estadoBooking,
+        string? motivoBooking = null)
     {
         if (solicitudId == Guid.Empty ||
             string.IsNullOrWhiteSpace(estadoBooking))
@@ -29,52 +28,68 @@ public class SincronizarEstadoReservaUseCase
             return;
         }
 
-        // Recuperar la solicitud original de Availability.
-        var solicitud = await _solicitudes.ObtenerPorId(solicitudId);
+        // Interpretar el estado que Booking informa mediante GET REST.
+        EstadoSolicitud nuevoEstado;
 
-        if (solicitud == null)
+        switch (estadoBooking.Trim().ToLowerInvariant())
         {
-            _logger.LogWarning(
-                "[AUDITORIA] No existe la solicitud {SolicitudId}",
-                solicitudId);
-            return;
+            case "retenida":
+                nuevoEstado = EstadoSolicitud.Reservado;
+                break;
+
+            case "confirmada":
+                nuevoEstado = EstadoSolicitud.Confirmada;
+                break;
+
+            case "rechazada":
+                nuevoEstado = EstadoSolicitud.Rechazada;
+                break;
+
+            case "vencida":
+                nuevoEstado = EstadoSolicitud.Vencida;
+                break;
+
+            default:
+                _logger.LogWarning(
+                    "[AUDITORIA] Estado desconocido de Booking: {Estado}",
+                    estadoBooking);
+                return;
         }
 
-        // En esta primera etapa procesamos únicamente confirmaciones.
-        if (!estadoBooking.Equals(
-                "Confirmada",
-                StringComparison.OrdinalIgnoreCase))
+        // Traducir el motivo informado por Booking.
+        MotivoRechazo? motivo = motivoBooking?.Trim().ToLowerInvariant() switch
         {
-            return;
-        }
+            "asientoocupado" => MotivoRechazo.Ocupado,
+            "pagofallido" => MotivoRechazo.PagoFallido,
+            "pagonodisponible" => MotivoRechazo.PagoNoDisponible,
+            _ => null
+        };
 
-        // Evitar repetir una actualización ya aplicada.
-        if (solicitud.Estado == EstadoSolicitud.Confirmada)
-        {
-            return;
-        }
-
-        // Buscar el asiento relacionado con la solicitud.
-        var asiento = await _asientos.ObtenerPorId(solicitud.AsientoId);
-
-        if (asiento == null || asiento.EventoId != solicitud.EventoId)
-        {
-            _logger.LogWarning(
-                "[AUDITORIA] Asiento inválido para la solicitud {SolicitudId}",
-                solicitudId);
-            return;
-        }
-
-        // Actualizar ambos estados.
-        solicitud.Estado = EstadoSolicitud.Confirmada;
-        asiento.Estado = EstadoAsiento.ocupado;
-
-        // Guardar ambos cambios en una única operación de SQLite.
-        await _solicitudes.ActualizarConAsiento(solicitud, asiento);
-
-        _logger.LogInformation(
-            "[AUDITORIA] Reserva confirmada. SolicitudId: {SolicitudId}, AsientoId: {AsientoId}",
+        // El repositorio refleja el estado protegiendo las retenciones.
+        bool actualizado = await _solicitudes.SincronizarAsiento(
             solicitudId,
-            asiento.Id);
+            nuevoEstado,
+            nuevoEstado switch
+            {
+                EstadoSolicitud.Reservado => EstadoAsiento.reservado,
+                EstadoSolicitud.Confirmada => EstadoAsiento.ocupado,
+                _ => null
+            },
+            motivo);
+
+        if (actualizado)
+        {
+            _logger.LogInformation(
+                "[AUDITORIA] Estado sincronizado. SolicitudId: {SolicitudId}, Estado: {Estado}",
+                solicitudId,
+                nuevoEstado);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "[AUDITORIA] No se pudo sincronizar la solicitud {SolicitudId}. Estado informado por Booking: {Estado}",
+                solicitudId,
+                nuevoEstado);
+        }
     }
 }

@@ -31,23 +31,65 @@ public class ReservasMvcController : Controller
         _logger = logger;
     }
 
-    // GET: Mostrar todos los asientos del evento seleccionado.
+    // GET: Mostrar la página completa de disponibilidad.
     [HttpGet]
     public async Task<IActionResult> Index(int eventoId = 1)
     {
         if (eventoId <= 0)
             return BadRequest("El evento debe ser válido.");
 
+        var modelo = await ConstruirModeloAsientos(eventoId);
+
+        return View(modelo);
+    }
+
+    // GET: Devolver únicamente el componente de asientos.
+    // JavaScript utilizará este endpoint para actualizar la interfaz.
+    [HttpGet]
+    public async Task<IActionResult> AsientosParcial(int eventoId = 1)
+    {
+        if (eventoId <= 0)
+            return BadRequest("El evento debe ser válido.");
+
+        try
+        {
+            // Reutilizar el caso de uso existente.
+            var modelo = await ConstruirModeloAsientos(eventoId);
+
+            // Evitar respuestas antiguas guardadas en caché.
+            Response.Headers.CacheControl = "no-store";
+
+            // Renderizar solamente las tarjetas de asientos.
+            return PartialView("_ListaAsientos", modelo);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "[AUDITORIA] Error al actualizar parcialmente los asientos. EventoId: {EventoId}",
+                eventoId);
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "No se pudo actualizar la disponibilidad.");
+        }
+    }
+
+    // Construye el modelo utilizado tanto por Index
+    // como por la Partial View.
+    private async Task<ReservasViewModel> ConstruirModeloAsientos(
+        int eventoId)
+    {
         var modelo = new ReservasViewModel
         {
             EventoId = eventoId
         };
 
-        // Obtener todos los asientos del evento.
+        // Consultar todos los asientos a través del caso de uso.
         var asientos = await _consultarDisponibilidad
             .EjecutarTodos(eventoId);
 
-        // Convertir las entidades del dominio a DTO para la vista MVC.
+        // Convertir entidades del dominio a DTO para MVC.
         modelo.Asientos = asientos.Select(a => new AsientoDto
         {
             Id = a.Id,
@@ -61,7 +103,7 @@ public class ReservasMvcController : Controller
                 "No se encontraron asientos para este evento.";
         }
 
-        return View(modelo);
+        return modelo;
     }
 
     // POST: Solicitar una reserva con el usuario autenticado.
@@ -206,7 +248,7 @@ public class ReservasMvcController : Controller
                     new { eventoId });
             }
 
-            // Consultar Booking por REST y sincronizar la confirmación.
+            // Consultar Booking mediante REST y sincronizar el estado.
             var resultado = await _seguimientoController
                 .ObtenerEstado(id);
 

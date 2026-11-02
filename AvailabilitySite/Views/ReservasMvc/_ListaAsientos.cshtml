@@ -1,0 +1,120 @@
+﻿@model AvailabilitySite.Models.ReservasViewModel
+
+@{
+    // Consultar si el usuario inició sesión.
+    var autenticado = User.Identity?.IsAuthenticated == true;
+}
+
+@if (Model.Asientos.Count == 0)
+{
+    <div class="alert alert-info">
+        @Model.Mensaje
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-2">
+
+        @foreach (var asiento in Model.Asientos)
+        {
+            // Interpretar los estados almacenados en SQLite.
+            var estaLibre = string.Equals(
+            asiento.Estado.ToString(),
+            "libre",
+            StringComparison.OrdinalIgnoreCase);
+
+            var estaReservado = string.Equals(
+            asiento.Estado.ToString(),
+            "reservado",
+            StringComparison.OrdinalIgnoreCase);
+
+            var estaOcupado = string.Equals(
+            asiento.Estado.ToString(),
+            "ocupado",
+            StringComparison.OrdinalIgnoreCase);
+
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+
+                        <h5 class="card-title">
+                            Asiento @asiento.Codigo
+                        </h5>
+
+                        <p class="mb-2">
+                            Estado: @asiento.Estado
+                        </p>
+
+                        @if (estaLibre)
+                        {
+                            <span class="badge bg-success">Disponible</span>
+                        }
+                        else if (estaReservado)
+                        {
+                            <span class="badge bg-warning text-dark">Reservado</span>
+                        }
+                        else if (estaOcupado)
+                        {
+                            <span class="badge bg-danger">Ocupado</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Estado desconocido
+                            </span>
+                        }
+
+                        <div class="mt-3">
+
+                            @if (!estaLibre)
+                            {
+                                <button type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        disabled>
+                                    @(estaReservado ? "Reservado" :
+                                                            estaOcupado ? "Ocupado" :
+                                                            "No disponible")
+                    </button>
+                                        }
+                            else if (autenticado)
+                            {
+                                <form asp-controller="ReservasMvc"
+                                      asp-action="SolicitarReserva"
+                                      method="post">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="eventoId"
+                                           value="@Model.EventoId" />
+
+                                    <input type="hidden"
+                                           name="asientoId"
+                                           value="@asiento.Id" />
+
+                                    <button type="submit"
+                                            class="btn btn-primary btn-sm"
+                                            onclick="return confirm('¿Querés solicitar la reserva del asiento @asiento.Codigo?')">
+                                        Solicitar reserva
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        onclick="alert('Debés iniciar sesión para solicitar una reserva.')">
+                                    Solicitar reserva
+                                </button>
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+

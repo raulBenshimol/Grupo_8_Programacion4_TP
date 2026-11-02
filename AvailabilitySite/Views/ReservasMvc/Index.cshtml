@@ -18,14 +18,14 @@
     var solicitudConsultada = TempData["SolicitudConsultada"] as string;
     var solicitudNueva = TempData["NuevaSolicitudId"] as string;
 
-    // Datos de presentación del seguimiento.
+    // Datos para mostrar el seguimiento de la reserva.
     var estado = "Sin información";
     var mensajeEstado = "No se pudo obtener el estado de la reserva.";
     var colorEstado = "secondary";
     var reservaId = "";
     var motivoRechazo = "";
 
-    // Interpretar la respuesta de Booking.
+    // Interpretar la respuesta del GET REST de Booking.
     if (!string.IsNullOrWhiteSpace(resultadoSeguimiento))
     {
         try
@@ -48,7 +48,8 @@
                     estado = propiedadEstado.GetString() ?? "Sin información";
                 }
 
-                if (booking.TryGetProperty("rejectionMotive", out var propiedadMotivo) &&
+                if (booking.TryGetProperty(
+                    "rejectionMotive", out var propiedadMotivo) &&
                     propiedadMotivo.ValueKind == JsonValueKind.String)
                 {
                     motivoRechazo = propiedadMotivo.GetString() ?? "";
@@ -62,15 +63,24 @@
                         break;
 
                     case "retenida":
+                        colorEstado = "warning";
+                        mensajeEstado = "Tu asiento se encuentra reservado temporalmente. Booking continúa procesando la solicitud.";
+                        break;
+
                     case "pendiente":
                     case "pendientepago":
                         colorEstado = "warning";
-                        mensajeEstado = "Tu reserva todavía está en proceso.";
+                        mensajeEstado = "Tu solicitud todavía está en proceso.";
                         break;
 
                     case "rechazada":
                         colorEstado = "danger";
-                        mensajeEstado = "La reserva no pudo ser confirmada.";
+                        mensajeEstado = "Booking rechazó tu solicitud de reserva.";
+                        break;
+
+                    case "vencida":
+                        colorEstado = "secondary";
+                        mensajeEstado = "La retención de tu reserva venció.";
                         break;
 
                     default:
@@ -82,7 +92,7 @@
         }
         catch (JsonException)
         {
-            // Si el JSON es inválido, mostrar un estado neutral.
+            // Mostrar un estado neutral si la respuesta no es válida.
         }
     }
 }
@@ -92,7 +102,7 @@
     <h2>Disponibilidad de asientos</h2>
 
     <p class="text-muted">
-        Seleccioná un evento para consultar sus asientos disponibles.
+        Seleccioná un evento para consultar sus asientos y su disponibilidad.
     </p>
 
     @* Mensajes generales *@
@@ -110,7 +120,7 @@
         </div>
     }
 
-    @* Consulta inmediata después de solicitar una reserva *@
+    @* Solicitud enviada *@
     @if (autenticado && !string.IsNullOrWhiteSpace(solicitudNueva))
     {
         <div class="card border-primary mb-4">
@@ -122,7 +132,7 @@
 
                 <p class="mb-2">
                     Tu solicitud fue recibida.
-                    Booking debe confirmar el resultado.
+                    Booking determinará el resultado de la reserva.
                 </p>
 
                 <p class="mb-3">
@@ -148,11 +158,12 @@
                         Consultar estado de mi reserva
                     </button>
                 </form>
+
             </div>
         </div>
     }
 
-    @* Tarjeta de seguimiento de la reserva *@
+    @* Seguimiento de una reserva *@
     @if (!string.IsNullOrWhiteSpace(resultadoSeguimiento))
     {
         <div class="card shadow-sm mb-4">
@@ -180,7 +191,6 @@
                     @mensajeEstado
                 </div>
 
-                @* Mostrar el usuario autenticado *@
                 @if (autenticado && !string.IsNullOrWhiteSpace(correoUsuario))
                 {
                     <div class="mb-3">
@@ -234,7 +244,7 @@
         </div>
     }
 
-    @* Selección de evento *@
+    @* Seleccionar evento *@
     <form asp-controller="ReservasMvc"
           asp-action="Index"
           method="get"
@@ -260,100 +270,17 @@
             <option value="3" selected="@(Model.EventoId == 3)">
                 Evento de prueba 3
             </option>
+
         </select>
 
     </form>
 
-    @* Listado de asientos y sus estados *@
+    @* Listado de asientos: renderizado con Partial View *@
     <h4>Asientos — Evento @Model.EventoId</h4>
 
-    @if (Model.Asientos.Count == 0)
-    {
-        <div class="alert alert-info">
-            @Model.Mensaje
-        </div>
-    }
-    else
-    {
-        @* Cuatro columnas en escritorio, dos en tablet y una en móvil. *@
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mt-2">
-
-            @foreach (var asiento in Model.Asientos)
-            {
-                // El estado puede provenir como enum o texto desde el DTO.
-                var estaLibre = string.Equals(
-                asiento.Estado.ToString(),
-                "libre",
-                StringComparison.OrdinalIgnoreCase);
-
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-
-                            <h5 class="card-title">
-                                Asiento @asiento.Codigo
-                            </h5>
-
-                            <p class="mb-2">
-                                Estado: @asiento.Estado
-                            </p>
-
-                            @if (estaLibre)
-                            {
-                                <span class="badge bg-success">Disponible</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">No disponible</span>
-                            }
-
-                            <div class="mt-3">
-                                @if (!estaLibre)
-                                {
-                                    <button type="button"
-                                            class="btn btn-secondary btn-sm"
-                                            disabled>
-                                        No disponible
-                                    </button>
-                                }
-                                else if (autenticado)
-                                {
-                                    <form asp-controller="ReservasMvc"
-                                          asp-action="SolicitarReserva"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <input type="hidden"
-                                               name="eventoId"
-                                               value="@Model.EventoId" />
-
-                                        <input type="hidden"
-                                               name="asientoId"
-                                               value="@asiento.Id" />
-
-                                        <button type="submit"
-                                                class="btn btn-primary btn-sm"
-                                                onclick="return confirm('¿Querés solicitar la reserva del asiento @asiento.Codigo?')">
-                                            Solicitar reserva
-                                        </button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <button type="button"
-                                            class="btn btn-secondary btn-sm"
-                                            onclick="alert('Debés iniciar sesión para solicitar una reserva.')">
-                                        Solicitar reserva
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+    <div id="contenedor-asientos">
+        <partial name="_ListaAsientos" model="Model" />
+    </div>
 
     @* Consulta de reservas anteriores *@
     <div class="mt-5">
@@ -404,6 +331,7 @@
                                 class="btn btn-secondary">
                             Consultar estado
                         </button>
+
                     </form>
                 }
                 else
@@ -420,3 +348,77 @@
     </div>
 
 </div>
+
+@section Scripts {
+    <script>
+        // Polling visual: consulta únicamente la Partial View.
+        (() => {
+            const contenedor = document.getElementById("contenedor-asientos");
+
+            const url = '@Url.Action("AsientosParcial", "ReservasMvc")';
+            const eventoId = '@Model.EventoId';
+
+            let actualizando = false;
+
+            async function actualizarAsientos() {
+
+                // Evitar consultas simultáneas o con la pestaña oculta.
+                if (!contenedor || actualizando || document.hidden) {
+                    return;
+                }
+
+                actualizando = true;
+
+                try {
+                    const parametros = new URLSearchParams({
+                        eventoId: eventoId
+                    });
+
+                    const respuesta = await fetch(
+                        `${url}?${parametros.toString()}`,
+                        {
+                            method: "GET",
+                            cache: "no-store",
+                            credentials: "same-origin"
+                        }
+                    );
+
+                    if (!respuesta.ok) {
+                        throw new Error(`HTTP ${respuesta.status}`);
+                    }
+
+                    const html = await respuesta.text();
+
+                    // Actualizar solo cuando el HTML cambie.
+                    if (contenedor.innerHTML.trim() !== html.trim()) {
+                        contenedor.innerHTML = html;
+                    }
+                }
+                catch (error) {
+                    console.warn(
+                        "Error al actualizar los asientos:",
+                        error
+                    );
+                }
+                finally {
+                    actualizando = false;
+                }
+            }
+
+            // Actualizar la lista cada cinco segundos.
+            const intervalo = setInterval(actualizarAsientos, 5000);
+
+            // Actualizar al regresar a la pestaña.
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) {
+                    actualizarAsientos();
+                }
+            });
+
+            // Detener el polling al abandonar la página.
+            window.addEventListener("pagehide", () => {
+                clearInterval(intervalo);
+            });
+        })();
+    </script>
+}

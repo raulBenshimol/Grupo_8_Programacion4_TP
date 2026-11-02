@@ -16,10 +16,19 @@ public class AsientoConfiguration : IEntityTypeConfiguration<Asiento>
         builder.ToTable("Asientos");
         builder.HasKey(a => a.Id);
 
-        // El código del asiento es un texto obligatorio de máximo 20 caracteres
-        builder.Property(a => a.Codigo).IsRequired().HasMaxLength(20);
+        // El código del asiento es obligatorio, máximo 20 caracteres.
+        builder.Property(a => a.Codigo)
+            .IsRequired()
+            .HasMaxLength(20);
 
-        // Guardamos el Enum como texto (string) en la base de datos para que se lea fácil
-        builder.Property(a => a.Estado).HasConversion<string>().HasMaxLength(20);
+        // Guardamos el Enum como texto en SQLite.
+        builder.Property(a => a.Estado)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        // Identifica la solicitud asociada a una retención.
+        // Es opcional porque los asientos existentes no tienen esta relación.
+        builder.Property(a => a.SolicitudReservaId)
+            .IsRequired(false);
     }
 }
