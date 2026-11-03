@@ -5,6 +5,7 @@ using Booking.Booking.Data;
 using Booking.Booking.Entities.Booking.Business.Interfaces;
 using Booking.Booking.Entities.Interfaces;
 using Booking.Booking.Infra.Auth;
+using Booking.Booking.Infra.Jobs;
 using Booking.Booking.Infra.Messaging.Azure;
 using Booking.Booking.Infra.Payment.Grpc;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,8 @@ using SistemaReservas.Contracts.Payment.V1;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Booking.Booking.Infra.Messaging;
 var builder = WebApplication.CreateBuilder(args);
-// El appsettings.json de Booking está dentro de la carpeta Booking.API, no en la raíz del proyecto.
-builder.Configuration.AddJsonFile("Booking.API/appsettings.json", optional: false);
 
 // Add services to the container.
 
@@ -48,6 +48,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddSingleton(_ => new ServiceBusClient(builder.Configuration.GetConnectionString("AzureServiceBus")));
 builder.Services.AddSingleton<IValidator<SolicitudReservaMensaje>, SolicitudReservaValidator>();
 builder.Services.AddHostedService<AzureServiceBusConsumer>();
+builder.Services.AddHostedService<VencimientoReservasJob>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<AuthServerTokenProvider>();
