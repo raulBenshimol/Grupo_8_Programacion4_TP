@@ -23,6 +23,10 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentGateway, SimulatedPaymentGateway>();
 builder.Services.AddScoped<PaymentBusiness>();
 
+// Logger de auditoría a archivo: Singleton para que todas las llamadas compartan el mismo
+// "turno" de escritura (SemaphoreSlim) y no escriban el .txt al mismo tiempo.
+builder.Services.AddSingleton<PaymentAuditLogger>();
+
 // Validación del JWT emitido por el AuthServer: se verifica la firma con su clave PÚBLICA (RS256).
 var rsa = RSA.Create();
 rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(builder.Configuration["Jwt:ClavePublica"]!), out _);
