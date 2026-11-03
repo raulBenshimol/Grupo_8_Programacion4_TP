@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Payment.Grpc.Migrations
+namespace Payment.Grpc.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -18,9 +18,10 @@ namespace Payment.Grpc.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SolicitudId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ReservaId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ReservaId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Aprobado = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Monto = table.Column<int>(type: "INTEGER", precision: 18, scale: 2, nullable: false),
+                    MontoCentavos = table.Column<long>(type: "INTEGER", nullable: false),
+                    CodigoTransferencia = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     FechaTransaccion = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
@@ -29,9 +30,9 @@ namespace Payment.Grpc.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "UX_Pagos_SolicitudId",
+                name: "UX_Pagos_ReservaId",
                 table: "Pagos",
-                column: "SolicitudId",
+                column: "ReservaId",
                 unique: true);
         }
 
