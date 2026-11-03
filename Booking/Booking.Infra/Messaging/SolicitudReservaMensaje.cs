@@ -1,7 +1,7 @@
 //Bruno Scucimarri
 using System.Text.Json.Serialization;
 
-namespace Booking.Booking.Infra.Messaging.Azure
+namespace Booking.Booking.Infra.Messaging
 {
     // Mensaje que publica Availability. Disallow rechaza campos que no estén acá, como pide
     // additionalProperties: false en SolicitudReserva.schema.json.

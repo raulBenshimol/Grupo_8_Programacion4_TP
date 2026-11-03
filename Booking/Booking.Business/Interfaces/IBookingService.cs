@@ -8,5 +8,6 @@ namespace Booking.Booking.Entities.Booking.Business.Interfaces
     {
         Task<BookingResponseDto> ProcessReservation(Guid solicitudId, int eventoId, int seatId, int userId);
         Task<BookingResponseDto?> GetReservationStatusBySolicitudId(Guid solicitudId);
+        Task<IReadOnlyList<BookingResponseDto>> VencerReservasRetenidas(CancellationToken ct = default);
     } 
 }

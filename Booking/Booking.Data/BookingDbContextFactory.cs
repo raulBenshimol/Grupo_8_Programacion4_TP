@@ -8,10 +8,10 @@ public class BookingDbContextFactory : IDesignTimeDbContextFactory<BookingDbCont
 {
     public BookingDbContext CreateDbContext(string[] args)
     {
-        // El appsettings está en Booking.API/ y ASP.NET no lo carga desde ahí: se lee a mano.
+        // dotnet ef no ejecuta Program.cs: la configuración se lee a mano desde la raíz del proyecto.
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile(Path.Combine("Booking.API", "appsettings.json"), optional: true)
+            .AddJsonFile("appsettings.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 

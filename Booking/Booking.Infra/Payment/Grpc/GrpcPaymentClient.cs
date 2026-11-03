@@ -1,4 +1,5 @@
 //Bruno Scucimarri
+using System.Diagnostics;
 using Booking.Booking.Business.Interfaces;
 using Grpc.Core;
 using SistemaReservas.Contracts.Payment.V1;
@@ -34,6 +35,26 @@ namespace Booking.Booking.Infra.Payment.Grpc
                 SimularRechazo = _configuration.GetValue<bool>("Payment:SimularRechazo")
             };
 
+            _logger.LogInformation("Inicio del cobro de la reserva {ReservaId} (solicitud {SolicitudId}): {MontoCentavos} centavos.",
+                reservaId, solicitudId, request.MontoCentavos);
+            var reloj = Stopwatch.StartNew();
+            ResultadoPago? resultado = null;
+
+            try
+            {
+                resultado = await EnviarConReintentos(request, reservaId);
+                _logger.LogInformation("Resultado del cobro de la reserva {ReservaId}: {Resultado}.", reservaId, resultado);
+                return resultado.Value;
+            }
+            finally
+            {
+                _logger.LogInformation("Fin del cobro de la reserva {ReservaId}: {Resultado} en {Milisegundos} ms.",
+                    reservaId, resultado?.ToString() ?? "error", reloj.ElapsedMilliseconds);
+            }
+        }
+
+        private async Task<ResultadoPago> EnviarConReintentos(PaymentRequestDto request, Guid reservaId)
+        {
             int maxIntentos = _configuration.GetValue<int>("Payment:MaxIntentos");
 
             for (int intento = 1; ; intento++)

@@ -15,10 +15,12 @@ namespace Booking.Booking.Business
         private readonly IReservaRepository _reservaRepository;
         private readonly IPaymentClient _paymentClient;
         private readonly IConfiguration _configuration;
-        public BookingService(IReservaRepository reservaRepository, IPaymentClient paymentClient, IConfiguration configuration) {
+        private readonly ILogger<BookingService> _logger;
+        public BookingService(IReservaRepository reservaRepository, IPaymentClient paymentClient, IConfiguration configuration, ILogger<BookingService> logger) {
             _reservaRepository = reservaRepository;
             _paymentClient = paymentClient;
             _configuration = configuration;
+            _logger = logger;
         }
         public async Task<BookingResponseDto?> GetReservationStatusBySolicitudId(Guid solicitudId)
         {
@@ -41,6 +43,13 @@ namespace Booking.Booking.Business
 
             if (reserva.Estado != ReservationStatusEnum.Retenida)
             {
+                return MapearRespuesta(reserva);
+            }
+
+            // Solo para la demo del vencimiento: la reserva queda Retenida y la vence el job.
+            if (_configuration.GetValue<bool>("Payment:OmitirCobro"))
+            {
+                _logger.LogWarning("Payment:OmitirCobro está activo: la reserva {ReservaId} queda Retenida sin cobrar.", reserva.Id);
                 return MapearRespuesta(reserva);
             }
 
@@ -70,7 +79,22 @@ namespace Booking.Booking.Business
                 return MapearRespuesta(actual);
             }
 
+            LogCambioEstado(reserva.Id, ReservationStatusEnum.Retenida, reserva.Estado);
             return MapearRespuesta(reserva);
+        }
+
+        // Libera los asientos de las Retenidas cuyo plazo terminó. Si un cobro estaba en curso,
+        // su Actualizar falla por concurrencia y la reserva queda Vencida.
+        public async Task<IReadOnlyList<BookingResponseDto>> VencerReservasRetenidas(CancellationToken ct = default)
+        {
+            IReadOnlyList<Reserva> vencidas = await _reservaRepository.VencerRetenidas(DateTime.UtcNow, ct);
+
+            foreach (Reserva reserva in vencidas)
+            {
+                LogCambioEstado(reserva.Id, ReservationStatusEnum.Retenida, ReservationStatusEnum.Vencida);
+            }
+
+            return vencidas.Select(MapearRespuesta).ToList();
         }
 
         private async Task<Reserva> RetenerAsiento(Guid solicitudId, int eventoId, int seatId, int userId)
@@ -102,6 +126,8 @@ namespace Booking.Booking.Business
                     reserva.MotivoRechazo = MotivosRechazo.AsientoOcupado;
                     await _reservaRepository.Guardar(reserva);
                 }
+
+                _logger.LogInformation("La reserva {ReservaId} se creó en estado {Estado}.", reserva.Id, reserva.Estado);
             }
             catch (SolicitudDuplicadaException)
             {
@@ -112,6 +138,9 @@ namespace Booking.Booking.Business
 
             return reserva;
         }
+
+        private void LogCambioEstado(Guid reservaId, ReservationStatusEnum anterior, ReservationStatusEnum nuevo) =>
+            _logger.LogInformation("La reserva {ReservaId} pasó de {EstadoAnterior} a {EstadoNuevo}.", reservaId, anterior, nuevo);
 
         private static BookingResponseDto MapearRespuesta(Reserva reserva) => new()
         {

@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Booking.Booking.Business.Interfaces;
 
-namespace Booking.Booking.Infra.Messaging.Azure
+namespace Booking.Booking.Infra.Messaging
 {
     // Valida el formato real del mensaje. No usa SolicitudReserva.schema.json porque exige
     // eventoId como Guid y camelCase, y rechazaría lo que Availability publica hoy.
