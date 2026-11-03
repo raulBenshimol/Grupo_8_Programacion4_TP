@@ -118,7 +118,7 @@ public class CuentaController : Controller
             return Redirect(returnUrl);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "ReservasMvc");
     }
 
     // Cerrar la sesión.
