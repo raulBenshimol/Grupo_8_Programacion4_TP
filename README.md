@@ -1,0 +1,86 @@
+# TP Grupo 8 : Sistemas distribuidos - Programación 4 2026
+
+## 👥 Integrantes - Asignación
+
+* **[Juan Cruz Borda]** - [Availability]
+* **[Juan Carlos Enrique Quinteros]** - [Availability]
+* **[Raul Benshimol]** - [Availability]
+* **[Bruno Scucimarri]** - [Booking]
+* **[Tobías Changazo]** - [Booking]
+* **[Owen Masson]** - [Payment]
+* **[Agustina Rosado]** - [Payment]
+* **[Carolina Alvarez]** - [Padrón/Legajo]
+* **[Nehuen Joel Melo]** - [Padrón/Legajo]
+
+---
+
+## 📝 Descripción
+
+
+### 🛠️ Tecnologías utilizadas
+* Lenguaje: .NET
+* Base de datos: SQLite
+
+---
+
+## 🚀 Instalación y Configuración
+
+Sigue estos pasos para ejecutar el proyecto de forma local.
+
+### 📋 Requisitos previos
+Es necesario tener instalado:
+
+
+### 🔧 Pasos para la configuración
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com
+   cd TU_REPOSITORIO
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   # Cambia esto por el comando de tu lenguaje (ej: npm install, pip install -r requirements.txt)
+   npm install
+   ```
+
+3. **Variables de entorno (Si aplica):**
+   Duplica el archivo de ejemplo y configura tus credenciales:
+   ```bash
+   cp .env.example .env
+   ```
+
+---
+
+## 💻 Modo de Uso / Ejecución
+
+Para iniciar la aplicación, ejecuta el siguiente comando en la terminal:
+
+```bash
+# Cambia esto por tu comando de inicio (ej: python main.py, npm start, ./main)
+npm start
+```
+
+Una vez levantado el servicio, puedes acceder a:
+* **Aplicación:** `http://localhost:3000`
+* **Documentación de la API:** `http://localhost:3000/api-docs` (Si aplica)
+
+### 🧪 Ejecución de Tests
+Si el TP incluye pruebas automatizadas, puedes correrlas con:
+```bash
+npm test
+```
+
+---
+
+## 📁 Estructura del Repositorio
+```text
+├── src/                  # Código fuente
+│   ├── controllers/      # Controladores de la lógica
+│   ├── models/           # Modelos de datos
+│   └── main.py           # Archivo de entrada principal
+├── tests/                # Pruebas automatizadas
+├── .gitignore            # Archivos excluidos de Git
+├── README.md             # Este archivo
+└── requirements.txt      # Dependencias del proyecto
+```
