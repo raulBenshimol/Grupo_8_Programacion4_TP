@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Payment.Grpc.Models;
 
 namespace Payment.Grpc.Data
@@ -12,7 +11,7 @@ namespace Payment.Grpc.Data
         }
 
         public DbSet<PayModel> Pagos => Set<PayModel>();
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
