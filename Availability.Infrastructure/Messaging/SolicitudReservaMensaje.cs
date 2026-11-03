@@ -7,5 +7,4 @@ public class SolicitudReservaMensaje
     public int EventoId { get; set; }
     public int AsientoId { get; set; }
     public int UsuarioId { get; set; }
-    public DateTime FechaSolicitud { get; set; }
 }

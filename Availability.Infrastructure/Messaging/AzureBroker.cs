@@ -37,8 +37,7 @@ public class AzureBroker : IMessageBroker, IAsyncDisposable
             SolicitudId = solicitud.Id,
             EventoId = solicitud.EventoId,
             AsientoId = solicitud.AsientoId,
-            UsuarioId = solicitud.UsuarioId,
-            FechaSolicitud = solicitud.FechaCreacion
+            UsuarioId = solicitud.UsuarioId
         };
 
         var mensaje = new ServiceBusMessage(JsonSerializer.Serialize(contenido))
