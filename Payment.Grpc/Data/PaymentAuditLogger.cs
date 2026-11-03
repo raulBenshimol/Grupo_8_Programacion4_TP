@@ -1,7 +1,10 @@
 using System.Text;
 
-namespace Payment.Grpc.Services;
+namespace Payment.Grpc.Data;
 
+// Capa de Datos (N-Layer): registro de auditoría en un archivo de texto, además del log por consola.
+// Escribir en un archivo es acceso a un recurso externo, como la base; por eso vive en Data y no en Services.
+// Se registra como Singleton: el SemaphoreSlim solo evita escrituras simultáneas si todas las llamadas comparten esta instancia.
 public sealed class PaymentAuditLogger
 {
     private readonly string _filePath;
