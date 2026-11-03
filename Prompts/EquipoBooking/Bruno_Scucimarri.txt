@@ -1,0 +1,25 @@
+Prompts:
+
+❯ En este momento el controller @Booking.API\BookingController.cs  de Booking esta devolviendo una respuesta hardcodeada, hay que inyectar el @Booking.Business\BookingService.cs y utilizar el metodo GetReservationStatusById (No tenes permitido tocar absolutamente ningun archivo que no pertenezca al proyecto Booking)
+
+❯ Deberiamos agregar un try catch al controllador, por si hay un error que no hayamos atrapado en el servicio, podemos devolver un 500
+
+❯ Necesito implementar 2 clases concretas (AzureServiceBusPublisher y AzureServiceBusConsumer) que implementan las interfaces IMessagePublisher y IMessageConsumer respectivamente. Agrega la entrada para el connection string al appsettings.json, yo lo completo con el dato necesario. El consumer deberia ser un background service para no tener que hacer polling, y ambas implementaciones van en la carpeta Booking.Infra/Messaging/Azure (Tenes terminantemente prohibido tocar cualquier archivo que no pertenezca al proyecto de booking)
+
+❯ Ok, vamos a implementar el metodo ProcessReservation del @Booking/Booking.Business/BookingService.cs
+
+❯ En la misma manera que implementamos el broker, vamos a implementar gRpc, interfaces en Business y concretas en infra
+
+❯ Podemos agregar un retry en caso de timeout? Que otros casos de error devuelve payment?
+
+❯ Agreguemos logs de mensaje recibido en el consumer del broker
+
+❯ Podriamos escribir un validador para verificar que el mensaje que availability envia por el broker cumpla con el formato y las propiedas correctas?
+
+❯ Bien, pero validator estaria bueno que sea una interfaz, Ivalidator con un metodo validate?
+
+❯ En el caso de que la validacion detecte un error, deberiamos enviar un mensaje acorde, podemos usar el mismo modelo que el dto de request, y en motivo rechazo agregar el motivo exacto del error
+
+❯ Vamos a hacer un cron job con el mecanismo nativo de .NET, debe correr cada un minuto, y tiene que llamar a VencerRetenidas del @Booking.Data\ReservaRepository.cs  atraves del @Booking.Business\BookingService.cs, para esto necesitamos agregar el metodo apropiado en el service de booking
+
+❯ Vamos a agregar tambien logs en todos los cambios de estado de la reserva, utilizando el formato "La reserva <id> paso de <estado> a <estado>
