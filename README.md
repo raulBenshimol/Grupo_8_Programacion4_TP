@@ -75,12 +75,49 @@ npm test
 
 ## 📁 Estructura del Repositorio
 ```text
-├── src/                  # Código fuente
-│   ├── controllers/      # Controladores de la lógica
-│   ├── models/           # Modelos de datos
-│   └── main.py           # Archivo de entrada principal
-├── tests/                # Pruebas automatizadas
+
+├── AuthServer/                    # Proyecto de Auth 
+│   ├── controllers/               # Controladores 
+│   ├── models/                    # Modelos 
+│   ├── services/                  # Servicios 
+│   └── Program.cs        
+├── Availability.Application/      # Proyecto Availability App
+│   ├── Interfaces/      
+│   └── UseCases/        
+├── Availability.controllers/      # Proyecto de Consoladores de Availability
+│   ├── controllers/               # Controladores 
+│   ├── DTO/                       # DTO 
+│   └── Presenter/                  
+├── Availability.Domain/           # Proyecto Availability Dominio
+│   ├── Entities/      
+│   └── Enum/      
+├── Availability.Infrastructure/   # Proyecto de Availability Infra 
+│   ├── externalServices/          #  
+│   ├── messaging/                 #  
+│   ├── migrations/                #  
+│   └── persistence/  
+├── Availability.Site/             # Proyecto de Availability Site 
+│   ├── Auth/                      #  
+│   ├── controllers/               # Controladores 
+│   ├── models/                    # Modelos 
+│   ├── properties/                #
+│   ├── views/                     #  
+│   ├── wwwroot/                   #
+│   └── Program.cs
+├── Booking/                       # Proyecto de Booking
+│   ├── API/                       #
+│   │   └── Program.cs    
+│   ├── business/                  #  
+│   ├── data/                      #  
+│   ├── entities/                  #
+│   └── infra/                     #  
+├── Payment.gRPC/                       # Proyecto de Payment
+│   ├── business/                  #  
+│   ├── data/                      #  
+│   ├── models/                    #
+│   ├── services/                  #
+│   └── Program.cs                 #  
+│       
 ├── .gitignore            # Archivos excluidos de Git
 ├── README.md             # Este archivo
-└── requirements.txt      # Dependencias del proyecto
 ```
