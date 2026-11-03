@@ -6,28 +6,28 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "solicitudId",
-    "eventoId",
-    "asientoId",
-    "usuarioId"
+    "SolicitudId",
+    "EventoId",
+    "AsientoId",
+    "UsuarioId"
   ],
   "properties": {
-    "solicitudId": {
+    "SolicitudId": {
       "type": "string",
-      "format": "Guid",
+      "format": "uuid",
       "description": "Identificador único de la solicitud registrado por Availability; corresponde a SolicitudReserva.Id."
     },
-    "eventoId": {
-      "type": "string",
-      "format": "Guid",
+    "EventoId": {
+      "type": "integer",
+      "minimum": 1,
       "description": "Identificador del evento al que pertenece el asiento."
     },
-    "asientoId": {
+    "AsientoId": {
       "type": "integer",
       "minimum": 1,
       "description": "Identificador del asiento dentro del evento; por ejemplo, A15."
     },
-    "usuarioId": {
+    "UsuarioId": {
       "type": "integer",
       "minimum": 1,
       "description": "Identificador del usuario autenticado que solicita la reserva."
