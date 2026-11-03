@@ -41,7 +41,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new RsaSecurityKey(rsa)
         };
     });
-builder.Services.AddAuthorization();
+
+// Autorización: además de un token válido, Payment exige que lo haya pedido el cliente de Booking.
+// El AuthServer agrega el claim "client_id" al emitir tokens por Client Credentials; solo Booking cobra pagos.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SoloBooking", policy =>
+        policy.RequireClaim("client_id", builder.Configuration["Jwt:ClienteAutorizado"]!));
+});
 
 var app = builder.Build();
 
@@ -54,8 +61,8 @@ using (var scope = app.Services.CreateScope())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Solo se puede llamar a Payment con un token válido de AuthServer
-app.MapGrpcService<PaymentGrpcService>().RequireAuthorization();
+// Solo se puede llamar a Payment con un token válido de AuthServer emitido por Bookking
+app.MapGrpcService<PaymentGrpcService>().RequireAuthorization("SoloBooking");
 
 // Configure the HTTP request pipeline.
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
