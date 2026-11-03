@@ -1,13 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
+using Microsoft.EntityFrameworkCore;
 using Availability.Domain.Entities;
 using Availability.Domain.Enum;
-
 
 namespace Availability.Infrastructure.Persistence;
 
@@ -15,37 +9,35 @@ public static class AsientosSeed
 {
     public static async Task InicializarAsync(AvailabilityDbContext context)
     {
-        // Asientos ficticios para probar la interfaz MVC.
+        // Crear ocho asientos para cada evento de prueba.
         for (int eventoId = 1; eventoId <= 3; eventoId++)
         {
             for (int numero = 1; numero <= 8; numero++)
             {
                 string codigo = $"A{numero}";
 
-                // Evita duplicar asientos al reiniciar la aplicación.
+                // Comprobar si el asiento ya existe en SQLite.
                 bool existe = await context.Asientos.AnyAsync(a =>
-                    a.EventoId == eventoId && a.Codigo == codigo);
+                    a.EventoId == eventoId &&
+                    a.Codigo == codigo);
 
+                // Evitar duplicar asientos existentes.
                 if (existe)
                     continue;
 
+                // Los asientos nuevos comienzan libres.
                 var asiento = new Asiento
                 {
                     EventoId = eventoId,
                     Codigo = codigo,
-                    Estado = numero <= 5
-                        ? EstadoAsiento.libre
-                        : numero <= 7
-                            ? EstadoAsiento.reservado
-                            : EstadoAsiento.ocupado
+                    Estado = EstadoAsiento.libre
                 };
 
                 context.Asientos.Add(asiento);
             }
         }
 
-        // Guarda únicamente los asientos nuevos.
+        // Guardar únicamente los asientos nuevos.
         await context.SaveChangesAsync();
     }
 }
-
