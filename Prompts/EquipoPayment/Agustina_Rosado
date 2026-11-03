@@ -1,0 +1,10 @@
+Prompts Agustina Rosado / Payment
+
+1.give me the min default connection string for sqlite in ef core for paymentgrpc project
+2."FechaTransaccion" value is ment to be inserted with the date and time like of the moment that is being inserted, as a timestamp. is it ok to use ValueGeneratedOnAdd here?
+3.Only for PaymentgRPC proyect: I want to add a "payment-audit-log" that is easy to use calling a function that writes into a txt file that can be stored in Data folder. The log should record at least the date time of the event, and a message. In case there is an error it would be good to log the stacktrace. Things that I think that should be logged: 
+when the api recieves a request successfully
+when a reservaid is approved or rejected, i want to also log the reserva id.
+when a response is sent successfully
+when a validation with a auth server is successful.
+4.explain why is the logger an async function?
