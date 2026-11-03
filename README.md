@@ -40,14 +40,14 @@ Es necesario tener instalado:
 
 2. **Instalar dependencias:**
    ```bash
-   # Cambia esto por el comando de tu lenguaje (ej: npm install, pip install -r requirements.txt)
-   npm install
+   #
+   
    ```
 
 3. **Variables de entorno (Si aplica):**
    Duplica el archivo de ejemplo y configura tus credenciales:
    ```bash
-   cp .env.example .env
+  
    ```
 
 ---
@@ -58,7 +58,7 @@ Para iniciar la aplicación, ejecuta el siguiente comando en la terminal:
 
 ```bash
 # Cambia esto por tu comando de inicio (ej: python main.py, npm start, ./main)
-npm start
+
 ```
 
 Una vez levantado el servicio, puedes acceder a:
@@ -68,7 +68,7 @@ Una vez levantado el servicio, puedes acceder a:
 ### 🧪 Ejecución de Tests
 Si el TP incluye pruebas automatizadas, puedes correrlas con:
 ```bash
-npm test
+
 ```
 
 ---
