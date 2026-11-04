@@ -41,10 +41,6 @@ else
                             Asiento @asiento.Codigo
                         </h5>
 
-                        <p class="mb-2">
-                            Estado: @asiento.Estado
-                        </p>
-
                         @if (estaLibre)
                         {
                             <span class="badge bg-success">Disponible</span>
@@ -66,17 +62,7 @@ else
 
                         <div class="mt-3">
 
-                            @if (!estaLibre)
-                            {
-                                <button type="button"
-                                        class="btn btn-secondary btn-sm"
-                                        disabled>
-                                    @(estaReservado ? "Reservado" :
-                                                            estaOcupado ? "Ocupado" :
-                                                            "No disponible")
-                    </button>
-                                        }
-                            else if (autenticado)
+                            @if (estaLibre && autenticado)
                             {
                                 <form asp-controller="ReservasMvc"
                                       asp-action="SolicitarReserva"
@@ -99,7 +85,7 @@ else
                                     </button>
                                 </form>
                             }
-                            else
+                            else if (estaLibre)
                             {
                                 <button type="button"
                                         class="btn btn-secondary btn-sm"
@@ -117,4 +103,3 @@ else
 
     </div>
 }
-

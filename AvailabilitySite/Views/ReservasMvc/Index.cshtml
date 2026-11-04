@@ -113,12 +113,33 @@
         </div>
     }
 
+
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
+        // Extraer el GUID de la solicitud para permitir copiarlo.
+        var identificador = System.Text.RegularExpressions.Regex.Match(
+        mensaje,
+        @"[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}"
+        ).Value;
+
         <div class="alert alert-success" role="status">
-            @mensaje
+            <div>@mensaje</div>
+
+            @if (!string.IsNullOrWhiteSpace(identificador))
+            {
+                <div class="mt-2">
+                    <code id="id-mensaje-reserva" class="d-none">@identificador</code>
+
+                    <button type="button"
+                            class="btn btn-outline-success btn-sm"
+                            data-copiar-id="id-mensaje-reserva">
+                        Copiar ID
+                    </button>
+                </div>
+            }
         </div>
     }
+
 
     @* Solicitud enviada *@
     @if (autenticado && !string.IsNullOrWhiteSpace(solicitudNueva))
@@ -135,10 +156,17 @@
                     Booking determinará el resultado de la reserva.
                 </p>
 
-                <p class="mb-3">
+                <div class="mb-3">
                     <strong>Identificador:</strong>
-                    <code style="overflow-wrap:anywhere;">@solicitudNueva</code>
-                </p>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                        <code id="id-solicitud-nueva" style="overflow-wrap:anywhere;">@solicitudNueva</code>
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                                data-copiar-id="id-solicitud-nueva">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
 
                 <form asp-controller="ReservasMvc"
                       asp-action="ConsultarEstado"
@@ -166,7 +194,7 @@
     @* Seguimiento de una reserva *@
     @if (!string.IsNullOrWhiteSpace(resultadoSeguimiento))
     {
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" id="panel-estado-reserva">
             <div class="card-body p-4">
 
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
@@ -181,9 +209,17 @@
                         </p>
                     </div>
 
-                    <span class="badge bg-@colorEstado">
-                        @estado
-                    </span>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-@colorEstado">
+                            @estado
+                        </span>
+                        <button type="button"
+                                class="btn-close"
+                                aria-label="Cerrar resultado"
+                                title="Cerrar"
+                                onclick="document.getElementById('panel-estado-reserva').remove()">
+                        </button>
+                    </div>
                 </div>
 
                 <div class="alert alert-@colorEstado mb-3"
@@ -221,9 +257,7 @@
                     </p>
 
                     <div class="bg-light border rounded p-2 mb-3">
-                        <code style="overflow-wrap:anywhere;">
-                            @solicitudConsultada
-                        </code>
+                        <code style="overflow-wrap:anywhere;">@solicitudConsultada</code>
                     </div>
                 }
 
@@ -234,9 +268,7 @@
                     </p>
 
                     <div class="bg-light border rounded p-2">
-                        <code style="overflow-wrap:anywhere;">
-                            @reservaId
-                        </code>
+                        <code style="overflow-wrap:anywhere;">@reservaId</code>
                     </div>
                 }
 
@@ -351,6 +383,22 @@
 
 @section Scripts {
     <script>
+        // Copiar identificadores reales sin modificar las solicitudes.
+        document.querySelectorAll('[data-copiar-id]').forEach(boton => {
+            boton.addEventListener('click', async () => {
+                const elemento = document.getElementById(boton.dataset.copiarId);
+                if (!elemento) return;
+
+                try {
+                    await navigator.clipboard.writeText(elemento.textContent.trim());
+                    boton.textContent = 'Copiado';
+                } catch (error) {
+                    boton.textContent = 'Error al copiar';
+                    console.warn('No se pudo copiar el identificador:', error);
+                }
+            });
+        });
+
         // Polling visual: consulta únicamente la Partial View.
         (() => {
             const contenedor = document.getElementById("contenedor-asientos");
