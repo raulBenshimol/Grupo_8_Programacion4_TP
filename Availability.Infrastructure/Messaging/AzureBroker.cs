@@ -58,15 +58,27 @@ public class AzureBroker : IMessageBroker, IAsyncDisposable
             CorrelationId = solicitud.Id.ToString()
         };
 
-        // Publicar el mensaje en Azure Service Bus.
-        await _sender.SendMessageAsync(mensaje);
+        try
+        {
+            // Publicar el mensaje en Azure Service Bus.
+            // A partir de aca el sistema se vuelve eventualmente consistente.
+            await _sender.SendMessageAsync(mensaje);
+        }
+        catch (Exception ex)
+        {
+            // Si el broker no esta disponible, queda registrado que falló la publicacion (y no otra cosa),
+            // de qué solicitud y hacia que topico. Se relanza para que el interactor decida qué responder.
+            _logger.LogError(
+                ex,
+                "[AUDITORIA] ERROR - Availability no pudo publicar en el broker. SolicitudId: {SolicitudId}, tópico: {Topico}",
+                solicitud.Id, _sender.EntityPath);
+            throw;
+        }
 
         _logger.LogInformation(
-            "[AUDITORIA] Availability publicó la solicitud {SolicitudId} en el tópico {Topico}",
-            solicitud.Id,
-            _sender.EntityPath);
+            "[AUDITORIA] Availability publicó en el broker. SolicitudId: {SolicitudId}, tópico: {Topico}, CorrelationId: {CorrelationId}",
+            solicitud.Id, _sender.EntityPath, mensaje.CorrelationId);
     }
-
     // Liberar los recursos al detener la aplicación.
     public async ValueTask DisposeAsync()
     {
