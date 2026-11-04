@@ -18,4 +18,5 @@
   </Folder>
   <Project Path="AuthServer/AuthServer.csproj" Id="71f20ac4-4884-4576-bf02-067787eb99ae" />
   <Project Path="Booking/Booking.csproj" Id="0f766b78-5bf4-4d7f-8557-c73c3f7578ea" />
+  <Folder Name="/Tests/"><Project Path="UnitTests/UnitTests.csproj" /></Folder>
 </Solution>
