@@ -107,13 +107,13 @@ if (app.Environment.IsDevelopment())
 }
 
 // 5. (Dejamos esto comentado por ahora para hacer las migraciones en el próximo paso)
-/*
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AvailabilityDbContext>();
-    db.Database.EnsureCreated(); 
+    db.Database.Migrate();
 }
-*/
+
 
 
 // Cargar asientos de prueba únicamente en desarrollo.
