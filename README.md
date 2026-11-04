@@ -9,8 +9,8 @@
 * **[Tobías Changazo]** - [Booking]
 * **[Owen Masson]** - [Payment]
 * **[Agustina Rosado]** - [Payment]
-* **[Carolina Alvarez]** - [Padrón/Legajo]
-* **[Nehuen Joel Melo]** - [Padrón/Legajo]
+* **[Carolina Alvarez]** - [AuthServer]
+* **[Nehuen Joel Melo]** - [AuthServer]
 
 ---
 
