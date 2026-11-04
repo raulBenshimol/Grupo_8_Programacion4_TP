@@ -6,7 +6,6 @@ using Availability.Controllers.Presenters;
 using Availability.Infrastructure;
 using Availability.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using AvailabilitySite.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using AvailabilitySite.Services;
 
@@ -34,6 +33,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<SolicitarReservaInteractor>();
 builder.Services.AddScoped<ConsultarDisponibilidadUseCase>();
 builder.Services.AddScoped<ObtenerResultadoSolicitudUseCase>();
+builder.Services.AddScoped<IniciarSesionUseCase>();
 
 // Sincroniza el estado de las reservas con Booking.
 builder.Services.AddScoped<SincronizarEstadoReservaUseCase>();
@@ -51,17 +51,14 @@ builder.Services.AddScoped<ISolicitudOutputPort>(sp => sp.GetRequiredService<Sol
 // Controladores Lógicos del Anillo 3.1 
 builder.Services.AddScoped<Availability.Controllers.Controllers.AvailabilityController>();
 builder.Services.AddScoped<Availability.Controllers.Controllers.SeguimientoController>();
-
-// Token de servicio: Availability se autentica ante Booking con el AuthServer (Client Credentials)
-builder.Services.AddSingleton<TokenClient>();
-builder.Services.AddTransient<TokenHandler>();
+builder.Services.AddScoped<Availability.Controllers.Controllers.AutenticacionController>();
 
 // CAMBIO: Cliente HTTP para llamar a Booking (el de tu compañero)
 builder.Services.AddHttpClient<IBookingService, Availability.Infrastructure.ExternalServices.BookingHttpClient>(
     client =>
     {
         client.BaseAddress = new Uri("https://localhost:7109/");
-    }).AddHttpMessageHandler<TokenHandler>(); // Para enviar el token al BookingService
+    }).AddHttpMessageHandler<Availability.Infrastructure.ExternalServices.TokenHandler>(); // Para enviar el token al BookingService
 
 // Login de usuarios con Google (proveedor) por OpenID Connect
 // Después de Google, el sitio cambia el id_token por el token del AuthServer y recuerda al usuario con una cookie.
