@@ -58,18 +58,9 @@ Para iniciar la aplicación, ejecuta el siguiente comando en la terminal:
 # Cambia esto por tu comando de inicio (ej: python main.py, npm start, ./main)
 
 ```
-
 Una vez levantado el servicio, puedes acceder a:
 * **Aplicación:** `http://localhost:3000`
 * **Documentación de la API:** `http://localhost:3000/api-docs` (Si aplica)
-
-### 🧪 Ejecución de Tests
-Si el TP incluye pruebas automatizadas, puedes correrlas con:
-```bash
-
-```
-
----
 
 ## 📁 Estructura del Repositorio
 ```text
