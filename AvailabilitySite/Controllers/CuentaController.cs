@@ -1,8 +1,5 @@
-
-using Availability.Domain.Entities;
-using Availability.Application.Interfaces;
 using System.Security.Claims;
-using AvailabilitySite.Auth;
+using Availability.Controllers.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -10,17 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace AvailabilitySite.Controllers;
 
 // Autenticación con Google mediante AuthServer.
+// El sitio solo maneja lo web (redirección a Google y cookie); la lógica está en el caso de uso IniciarSesion.
 public class CuentaController : Controller
 {
-    private readonly TokenClient _tokenClient;
-    private readonly IUsuarioRepository _usuarioRepository;
+    private readonly AutenticacionController _autenticacionController;
 
-    public CuentaController(
-        TokenClient tokenClient,
-        IUsuarioRepository usuarioRepository)
+    public CuentaController(AutenticacionController autenticacionController)
     {
-        _tokenClient = tokenClient;
-        _usuarioRepository = usuarioRepository;
+        _autenticacionController = autenticacionController;
     }
 
     [HttpGet]
@@ -43,9 +37,8 @@ public class CuentaController : Controller
         return Challenge(propiedades, "Google");
     }
 
-    // 2. Validar la autenticación con AuthServer.
-    // 3. Buscar o registrar al usuario en SQLite.
-    // 4. Guardar su identidad y su ID en la sesión.
+    // 2. Validar la cuenta con el AuthServer y buscar o registrar al usuario (caso de uso IniciarSesion).
+    // 3. Guardar su identidad y su ID en la cookie.
     public async Task<IActionResult> DespuesDeGoogle(string? returnUrl)
     {
         var idTokenGoogle = await HttpContext.GetTokenAsync("id_token");
@@ -53,22 +46,9 @@ public class CuentaController : Controller
         var email = User.FindFirstValue(ClaimTypes.Email)
                     ?? User.FindFirstValue("email");
 
-        string? accessToken = null;
+        var sesion = await _autenticacionController.IniciarSesion(idTokenGoogle, email);
 
-        try
-        {
-            if (idTokenGoogle != null)
-            {
-                accessToken = await _tokenClient
-                    .ObtenerTokenUsuarioAsync(idTokenGoogle);
-            }
-        }
-        catch (HttpRequestException)
-        {
-            // AuthServer no respondió.
-        }
-
-        if (accessToken == null || string.IsNullOrWhiteSpace(email))
+        if (sesion == null)
         {
             await HttpContext.SignOutAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme);
@@ -79,29 +59,13 @@ public class CuentaController : Controller
             return RedirectToAction(nameof(Login), new { returnUrl });
         }
 
-        // Buscar al usuario por su identidad autenticada.
-        var identidadExterna = email.Trim().ToLowerInvariant();
-
-        var usuario = await _usuarioRepository
-            .ObtenerPorIdentidadAsync(identidadExterna);
-
-        // Registrar al usuario si ingresa por primera vez.
-        if (usuario == null)
-        {
-            usuario = await _usuarioRepository.CrearAsync(new Usuario
-            {
-                IdentidadExterna = identidadExterna,
-                Email = email
-            });
-        }
-
         // Incorporar el ID numérico a la identidad autenticada.
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new(ClaimTypes.Name, email),
-            new(ClaimTypes.Email, email),
-            new("access_token", accessToken)
+            new(ClaimTypes.NameIdentifier, sesion.UsuarioId.ToString()),
+            new(ClaimTypes.Name, sesion.Email),
+            new(ClaimTypes.Email, sesion.Email),
+            new("access_token", sesion.AccessToken)
         };
 
         var identidad = new ClaimsIdentity(
