@@ -5,6 +5,7 @@
 * **[Juan Cruz Borda]** - [Availability]
 * **[Juan Carlos Enrique Quinteros]** - [Availability]
 * **[Raul Benshimol]** - [Availability]
+* **[Matias Albergamo]** - [Mensajeria]
 * **[Bruno Scucimarri]** - [Booking]
 * **[Tobías Changazo]** - [Booking]
 * **[Owen Masson]** - [Payment]
@@ -41,11 +42,11 @@
 
 **Justificación de su participación:** La consigna exige que el usuario obtenga un token para reservar y que los microservicios se autentiquen entre sí "con el servidor de autorización". Es el único que emite y firma tokens (RS256); así los demás servicios no guardan contraseñas ni deciden identidades, solo verifican la firma.
 
-* **Componente: message broker**
+* **Componente: Message Broker**
 
-**Rol:** Enviar la solicitud de reserva de asiento desde Availability a Booking
+**Rol:** Intermediario de mensajería asincrónica entre Availability y Booking
 
-**Justificación de su participación:** Debe garantizar el envío de las solicitudes de forma controlada.
+**Justificación de su participación:** Permite que Availability responda sin esperar a Booking y que las réplicas de Booking se repartan las solicitudes, sin que se pierdan si Booking no está disponible.
 
 * **Componente: Notifications**
 
