@@ -1,0 +1,86 @@
+# Historial de prompts: Owen Masson / Payment
+
+Herramienta: Claude. Componente: Payment gRPC API (junto con Agustina Rosado).
+
+---
+
+## Contexto y forma de trabajo
+
+> Hola. Soy estudiante de la Tecnicatura en Programación de la UTN y estoy haciendo el trabajo práctico grupal de Programación IV: un sistema de reserva de asientos con microservicios en .NET. A mí y a una compañera nos tocó el microservicio Payment, que recibe por gRPC los pedidos de cobro de Booking.
+>
+> Te adjunto el enunciado. De Payment, la consigna pide: arquitectura N-Layer, dominio anémico, comentarios en el código que justifiquen las decisiones, autenticación entre servicios con el servidor de autorización, logs de auditoría de inicio y fin, diagrama de la API, happy path y flujo de fallo.
+>
+> Te pido:
+> - No me des código ya hecho para copiar. Yo creo los proyectos y escribo el código; vos proponés, explicás y revisás lo que hice.
+> - Antes de cada decisión de arquitectura, presentame las opciones: qué cambia si elijo una u otra, qué se suele hacer hoy en la industria y cuál recomendás. La decisión la tomo yo.
+> - Distinguí siempre qué exige la consigna, qué es convención de la industria y qué es una decisión libre.
+> - Explicame cada pieza con el vocabulario de la materia (clase, propiedad, interfaz, inyección de dependencias), un concepto por vez y con analogías cuando ayuden.
+> - Si algo afecta a otro servicio o a archivos compartidos del repo (el contrato, la solución), avisame para coordinarlo con el grupo.
+>
+> Decisiones ya tomadas por el grupo: .NET 9, una sola solución con todos los servicios, un servidor de autorización propio, y el contrato gRPC en Contract/gRPC/payment.proto.
+
+---
+
+## Creación del proyecto y estructura N-Layer
+
+> Arranquemos por crear el proyecto de Payment en Visual Studio con la plantilla de gRPC. Que estructura deberia seguir para respetar el N-Layer?
+
+---
+
+## Primer endpoint de prueba
+
+> Quiero exponer el método ProcesarPago del contrato. Explicame cómo se relaciona mi clase del servicio con la clase que genera el proto y cómo se registra en Program.cs. Vamos a armar una respuesta fija para que tenga Booking hasta que resolvamos la lógica.
+
+---
+
+## Configuración de Postman para probar gRPC
+
+> Guiame para armar un pedido gRPC en Postaman a Payment.
+
+---
+
+## Modelo y migración de la base
+
+> Mi compañera armó el modelo PayModel, el DbContext y una primera migración con SQLite. Revisemos si son compatibles con el contrato que cerramos. ¿El modelo tiene que coincidir con el proto?
+
+---
+
+## Pasarela de pago simulada
+
+> Ahora la capa Business. Antes de escribirla, quiero agregar una pasarela de pago simulada para no tener el pago aprobado fijo. ¿La pasarela es otro servicio o una clase dentro de Payment? ¿Dónde conviene leer simular_rechazo, en Business o en la pasarela? ¿Quién genera el código de transferencia? ¿Usamos una interfaz?
+
+---
+
+## Repositorio y lógica de negocio
+
+> Sigamos con el repositorio y con PaymentBusiness. Planteame las decisiones: qué devuelve Business a Services (el DTO del proto o una clase propia), si el repositorio lleva interfaz, qué operaciones mínimas necesita Business, en qué orden van los pasos del cobro y qué pasa con los pagos rechazados ante un reintento. Además, ¿dónde quedan registrados los logs de auditoría de inicio y fin?
+
+---
+
+## Inyección de dependencias y creación de la base
+
+> Falta conectar las capas en Program.cs. Explicame cómo registro el DbContext, el repositorio, la pasarela y Business, y qué ciclo de vida corresponde a cada uno. ¿Cuándo conviene crear la base: al arrancar la aplicación o a mano con un comando?
+
+---
+
+## Conexión de Services con Business
+
+> Reemplacemos la respuesta de prueba del servicio gRPC por la llamada real a Business. ¿Qué validaciones le corresponden a la capa de presentación y cómo se le informa a Booking un pedido inválido, según lo que documentamos en el contrato?
+
+---
+
+## Integración del logger de auditoría a archivo
+
+> Mi compañera desarrolló un logger que guarda los logs de auditoría en un .txt. Quiero usarlo en Business además del log por consola. Revisalo y decime: ¿en qué carpeta debería vivir para respetar N-Layer? ¿Cómo se registra: Scoped o Singleton? ¿Hay que excluir el archivo de Git?
+
+---
+
+## Pruebas de punta a punta con el servidor de autorización
+
+> Payment ahora exige un token del servidor de autorización. Guiame para probar todo con Postman: dónde guardo y cómo cargo los secrets del AuthServer, cómo pido un token con Client Credentials y cómo lo mando en la llamada gRPC.
+
+---
+
+## Restricción de Payment al cliente de Booking
+
+> Quiero que solo Booking pueda cobrar en Payment, no cualquier servicio con un token válido. ¿Eso lo resuelvo en Payment o en el servidor de autorización?
