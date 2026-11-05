@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Availability.Application.Interfaces;
+using Availability.Infrastructure.ExternalServices;
 using Availability.Infrastructure.Messaging;
 using Availability.Infrastructure.Persistence;
 using Availability.Infrastructure.Persistence.Repositories;
@@ -33,6 +34,13 @@ public static class DependencyInjection
 
         // 3. Registrar el Broker (Azure Service Bus)
         services.AddSingleton<IMessageBroker, AzureBroker>();
+
+        // 4. AuthServer (servicio externo): tokens de servicio y de usuario
+        // Singleton para reutilizar el token de servicio hasta que venza
+        services.AddHttpClient();
+        services.AddSingleton<IAuthServerService, AuthServerHttpClient>();
+        services.AddTransient<TokenHandler>();
+
 
         return services;
     }
