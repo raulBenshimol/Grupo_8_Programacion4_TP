@@ -14,8 +14,8 @@
 
 ---
 
-## 📝 Descripción
-1) Interpretación del diagrama, justificacion
+## 📝 Respuestas
+### 1) Interpretación del diagrama, justificacion
    
 * **Componente: Availability**
 
@@ -41,6 +41,8 @@
 
 **Justificación de su participación:** La consigna exige que el usuario obtenga un token para reservar y que los microservicios se autentiquen entre sí "con el servidor de autorización". Es el único que emite y firma tokens (RS256); así los demás servicios no guardan contraseñas ni deciden identidades, solo verifican la firma.
 
+### Señalar en el diagrama donde el sistema se vuelve eventualmente consistente.
+El sistema se vuelve eventualmente consistente en la comunicacióon entre availability y booking, ya que debe garantizar la **disponibilidad** del asiento solicitado por el usuario, aunque el mismo termine rechazado y liberado.
 
 ### 🛠️ Tecnologías utilizadas
 * Lenguaje: .NET
