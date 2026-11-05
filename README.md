@@ -15,40 +15,36 @@
 ---
 
 ## 📝 Descripción
+1) Interpretación del diagrama, justificacion
+   
+* **Componente: Availability**
+
+**Rol:** Permitir la interacción del usuario para consultar los asientos disponibles.
+
+**Justificación de su participación:** La consigna exige que el usuario tenga una interfaz que le permita consultar la disponibilidad de los asientos del evento. Es requerido para comenzar el proceso de reserva del asiento, enviando la solucitud a booking a traves del message broker y para solicitar cualquier cambio de estado de los asientos.
+
+* **Componente: Booking**
+
+**Rol:** Permite al usuario autenticado reservar asientos.
+
+**Justificación de su participación:** Si el usuario desea efectuar la reserva, booking comienza el proceso de retención del asiento solicitado hasta que sea confirmado o rechazado, para evitar que otro usuario pueda solicitar el mismo asiento.
+
+* **Componente: Payment gRPC**
+
+**Rol:** Recibir solicitud de pago, responder aprobado o desaprobado.
+
+**Justificación de su participación:** La consigna exige que el pago de la reserva sea solicitado y aprobado para poder confirmar el asiento como ocupado. En el cado de rechazarlo, debe devolver esa respuesta correspondiente a booking.
+
+* **Componente: AuthServer (servidor de autorización)**
+
+**Rol:** Autenticación y emisión de tokens (Authorization Server de OAuth 2.0)	
+
+**Justificación de su participación:** La consigna exige que el usuario obtenga un token para reservar y que los microservicios se autentiquen entre sí "con el servidor de autorización". Es el único que emite y firma tokens (RS256); así los demás servicios no guardan contraseñas ni deciden identidades, solo verifican la firma.
 
 
 ### 🛠️ Tecnologías utilizadas
 * Lenguaje: .NET
 * Base de datos: SQLite
-
----
-
-## 🚀 Instalación y Configuración
-
-Sigue estos pasos para ejecutar el proyecto de forma local.
-
-### 📋 Requisitos previos
-Es necesario tener instalado:
-
-
-### 🔧 Pasos para la configuración
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com
-   cd TU_REPOSITORIO
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   #
-   
-   ```
-
-3. **Variables de entorno (Si aplica):**
-   Duplica el archivo de ejemplo y configura tus credenciales:
-   ```bash
-  
-   ```
 
 ---
 
