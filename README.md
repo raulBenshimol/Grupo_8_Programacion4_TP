@@ -41,6 +41,18 @@
 
 **Justificación de su participación:** La consigna exige que el usuario obtenga un token para reservar y que los microservicios se autentiquen entre sí "con el servidor de autorización". Es el único que emite y firma tokens (RS256); así los demás servicios no guardan contraseñas ni deciden identidades, solo verifican la firma.
 
+* **Componente: message broker**
+
+**Rol:** Enviar la solicitud de reserva de asiento desde Availability a Booking
+
+**Justificación de su participación:** Debe garantizar el envío de las solicitudes de forma controlada.
+
+* **Componente: Notifications**
+
+**Rol:** Notificar al usuario el estado del avance de su reserva
+
+**Justificación de su participación:** Dar visibilidad al usuario del avance del proceso completo del estado de la reserva, estado de pago, confirmación final de reserva exitosa o rechazada.
+
 ### Señalar en el diagrama donde el sistema se vuelve eventualmente consistente.
 El sistema se vuelve eventualmente consistente en la comunicacióon entre availability y booking, ya que debe garantizar la **disponibilidad** del asiento solicitado por el usuario, aunque el mismo termine rechazado y liberado.
 
