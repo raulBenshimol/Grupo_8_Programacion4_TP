@@ -54,6 +54,16 @@
 
 **Justificación de su participación:** Dar visibilidad al usuario del avance del proceso completo del estado de la reserva, estado de pago, confirmación final de reserva exitosa o rechazada.
 
+3. **Configurar los secrets (obligatorio antes de levantar el proyecto):**
+   Las claves (clave privada del JWT, connection string de Azure Service Bus, client secret de Google y secretos de cliente) no están en el repositorio: se cargan como User Secrets de .NET en AuthServer, AvailabilitySite y Booking.
+
+   1. Colocar el archivo `secrets.json` en la raíz de la solución, al lado de `Programacion4_TP.slnx` y `configurar-secrets.ps1`. Su formato es el de `secrets.example.json`.
+   2. Desde esa carpeta, correr el script en PowerShell:
+      ```powershell
+      .\configurar-secrets.ps1
+      ```
+
+
 ### Señalar en el diagrama donde el sistema se vuelve eventualmente consistente.
 El sistema se vuelve eventualmente consistente en la comunicacióon entre availability y booking, ya que debe garantizar la **disponibilidad** del asiento solicitado por el usuario, aunque el mismo termine rechazado y liberado.
 
@@ -120,6 +130,8 @@ Una vez levantado el servicio, puedes acceder a:
 │   ├── services/                  #
 │   └── Program.cs                 #  
 │       
+├── configurar-secrets.ps1 # Carga los User Secrets de todos los proyectos
+├── secrets.example.json   # Plantilla de secrets.json (sin valores)
 ├── .gitignore            # Archivos excluidos de Git
 ├── README.md             # Este archivo
 ```
