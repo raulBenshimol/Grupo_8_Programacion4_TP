@@ -21,6 +21,8 @@ Thumbs.db
 
 # NuGet
 *.nupkg
+
+secrets.json
 packages/
 
 # SQLite Databases
