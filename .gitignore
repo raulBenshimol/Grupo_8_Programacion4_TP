@@ -22,3 +22,8 @@ Thumbs.db
 # NuGet
 *.nupkg
 packages/
+
+# SQLite Databases
+*.db
+*.db-shm
+*.db-wal
